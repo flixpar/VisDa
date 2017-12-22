@@ -4,3 +4,4 @@ Semantic Segmentation
 Architectures:
 - GCN
 - UNet
+- PSPNet
