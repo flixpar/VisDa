@@ -5,12 +5,13 @@ import torch
 import cv2
 from torch.utils import data
 
-num_classes = 0
-ignore_label = 0
-
 root_dir = ""
 
 class VisDaDataLoader(data.Dataset):
+
+	num_classes = 0
+	class_weights = torch.ones(num_classes)
+	ignore_labels = []
 
 	def __init__(self):
 
@@ -18,6 +19,8 @@ class VisDaDataLoader(data.Dataset):
 		self.label_fnlist = sort(glob.glob(os.path.join(root_dir, "annotations", "*.png")))
 
 		self.size = len(self.image_fnlist)
+
+		self.img_size = cv2.imread(self.image_fnlist[0]).size()[0]
 
 	def __getitem__(self, index):
 
