@@ -4,15 +4,13 @@ from torch import nn
 from torchvision import models
 import os
 
-res152_path = os.path.join(root, 'ResNet', 'resnet152-b121ed2d.pth')
-
 class _GlobalConvModule(nn.Module):
 	def __init__(self, in_dim, out_dim, kernel_size):
 		super(_GlobalConvModule, self).__init__()
+
 		pad0 = (kernel_size[0] - 1) / 2
 		pad1 = (kernel_size[1] - 1) / 2
-		# kernel size had better be odd number so as to avoid alignment error
-		super(_GlobalConvModule, self).__init__()
+
 		self.conv_l1 = nn.Conv2d(in_dim, out_dim, kernel_size=(kernel_size[0], 1), padding=(pad0, 0))
 		self.conv_l2 = nn.Conv2d(out_dim, out_dim, kernel_size=(1, kernel_size[1]), padding=(0, pad1))
 		self.conv_r1 = nn.Conv2d(in_dim, out_dim, kernel_size=(1, kernel_size[1]), padding=(0, pad1))
@@ -25,7 +23,6 @@ class _GlobalConvModule(nn.Module):
 		x_r = self.conv_r2(x_r)
 		x = x_l + x_r
 		return x
-
 
 class _BoundaryRefineModule(nn.Module):
 	def __init__(self, dim):
@@ -41,14 +38,18 @@ class _BoundaryRefineModule(nn.Module):
 		out = x + residual
 		return out
 
-
 class GCN(nn.Module):
-	def __init__(self, num_classes, input_size, pretrained=True):
+	def __init__(self, num_classes, input_size):
 		super(GCN, self).__init__()
+
 		self.input_size = input_size
+
+		# https://download.pytorch.org/models/resnet152-b121ed2d.pth
+		res152_path = os.path.join('~/data', 'ResNet', 'resnet152.pth')
+
 		resnet = models.resnet152()
-		if pretrained:
-			resnet.load_state_dict(torch.load(res152_path))
+		resnet.load_state_dict(torch.load(res152_path))
+
 		self.layer0 = nn.Sequential(resnet.conv1, resnet.bn1, resnet.relu)
 		self.layer1 = nn.Sequential(resnet.maxpool, resnet.layer1)
 		self.layer2 = resnet.layer2
