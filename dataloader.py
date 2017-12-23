@@ -1,5 +1,5 @@
 import os
-import glob.glob
+import glob
 import numpy as np
 import torch
 import cv2
@@ -10,17 +10,17 @@ ignore_label = 0
 
 root_dir = ""
 
-class DataLoader(data.Dataset):
+class VisDaDataLoader(data.Dataset):
 
 	def __init__(self):
 
-		self.image_fnlist = sort(glob(os.path.join(root_dir, "images", "*.png")))
-		self.label_fnlist = sort(glob(os.path.join(root_dir, "annotations", "*.png")))
+		self.image_fnlist = sort(glob.glob(os.path.join(root_dir, "images", "*.png")))
+		self.label_fnlist = sort(glob.glob(os.path.join(root_dir, "annotations", "*.png")))
 
 		self.size = len(self.image_fnlist)
 
 	def __getitem__(self, index):
-		
+
 		img_fn = self.image_fnlist[index]
 		lbl_fn = self.label_fnlist[index]
 
