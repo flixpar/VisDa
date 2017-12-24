@@ -13,6 +13,7 @@ class VisDaDataset(data.Dataset):
 	class_weights = torch.ones(num_classes)
 	ignore_labels = [0, 1, 2, 3]
 	shape = (1052, 1914)
+	#shape = (526, 957)
 
 	labels = [(0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0), (20, 20, 20), (111, 74, 0), (81, 0, 81), (128, 64, 128),
 	          (244, 35, 232), (250, 170, 160), (230, 150, 140), (70, 70, 70), (102, 102, 156), (190, 153, 153),
@@ -32,7 +33,8 @@ class VisDaDataset(data.Dataset):
 		# self.label_fnlist = sorted(glob.glob(os.path.join(root_dir, "annotations", "*.png")))
 
 		self.size = len(self.image_fnlist)
-		self.img_size = cv2.imread(self.image_fnlist[0]).shape[0:2]
+		#self.img_size = cv2.imread(self.image_fnlist[0]).shape[0:2]
+		self.img_size = self.shape
 
 	def __getitem__(self, index):
 		img_fn = self.image_fnlist[index]
@@ -47,12 +49,12 @@ class VisDaDataset(data.Dataset):
 		#assert (img.shape[0] == lbl.shape[0])
 		#assert (img.shape[1] == lbl.shape[1])
 
-		lbl = self.transform_labels(lbl)
-
 		if (lbl.shape != self.shape):
 			size = (self.shape[1], self.shape[0])
 			img = cv2.resize(img, size, cv2.INTER_LINEAR)
 			lbl = cv2.resize(lbl, size, cv2.INTER_NEAREST)
+
+		lbl = self.transform_labels(lbl)
 
 		img = torch.from_numpy(img).permute(2, 0, 1).type(torch.FloatTensor)
 		lbl = torch.from_numpy(lbl).type(torch.LongTensor)

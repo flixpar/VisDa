@@ -37,7 +37,7 @@ print("Starting training...")
 
 for epoch in range(epochs):
 
-	for i, (image, label) in tqdm.tqdm(enumerate(dataloader)):
+	for (image, label) in tqdm.tqdm(dataloader, total=len(dataset)):
 		img = autograd.Variable(image.cuda())
 		lbl = autograd.Variable(label.cuda())
 		#img = autograd.Variable(image)
@@ -52,7 +52,8 @@ for epoch in range(epochs):
 
 	print("Epoch {} completed.".format(epoch + 1))
 
-	if (epoch + 1) % 25 == 0:
+	#if (epoch + 1) % 25 == 0:
+	if True:
 		lr /= 5
 		optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
 		torch.save(model.state_dict(), save_path % (epoch + 1))
