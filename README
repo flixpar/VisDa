@@ -1,7 +1,19 @@
 Visual Domain Adaptation Challenge
 Semantic Segmentation
+Felix Parker
 
-Architectures:
+Implemented Architectures:
+
+Planned Architectures:
 - GCN
 - UNet
 - PSPNet
+
+Todo:
+- implement transforms
+- find class weights
+- find per channel image mean and stdev
+- try loss functions
+- try optimizers
+- test hyperparameters
+- validation every epoch
