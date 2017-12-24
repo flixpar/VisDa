@@ -6,6 +6,7 @@ from torch import autograd
 from dataloader import VisDaDataLoader
 from gcn import GCN
 from util import CrossEntropyLoss2d
+from util import cross_entropy2d
 
 import os
 
@@ -30,6 +31,7 @@ model.train()
 optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
 criterion = CrossEntropyLoss2d(weight=data.class_weights.cuda())
 #criterion = nn.CrossEntropyLoss(data.class_weights.cuda())
+#criterion = nn.NLLLoss2d(data.class_weights.cuda())
 
 print("Starting training...")
 
@@ -42,6 +44,7 @@ for epoch in range(epochs):
 
 		output = model(img)
 		loss = criterion(output, lbl)
+		#loss = cross_entropy2d(output, lbl)
 
 		optimizer.zero_grad()
 		loss.backward()
