@@ -41,7 +41,7 @@ class VisDaDataset(data.Dataset):
 		img = cv2.imread(img_fn)
 		lbl = cv2.imread(lbl_fn, 0)
 
-		if (img.shape[0] != lbl.shape[0] || img.shape[1] != lbl.shape[1])
+		if (img.shape[0] != lbl.shape[0] or img.shape[1] != lbl.shape[1]):
 			return self.__getitem__(index+1)
 
 		#assert (img.shape[0] == lbl.shape[0])
@@ -54,8 +54,8 @@ class VisDaDataset(data.Dataset):
 			img = cv2.resize(img, size, cv2.INTER_LINEAR)
 			lbl = cv2.resize(lbl, size, cv2.INTER_NEAREST)
 
-		img = torch.unsqueeze(torch.from_numpy(img).permute(2, 0, 1), 0).type(torch.FloatTensor)
-		lbl = torch.unsqueeze(torch.from_numpy(lbl), 0).type(torch.LongTensor)
+		img = torch.from_numpy(img).permute(2, 0, 1).type(torch.FloatTensor)
+		lbl = torch.from_numpy(lbl).type(torch.LongTensor)
 
 		img = img / 255.0
 

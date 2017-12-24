@@ -13,7 +13,7 @@ import tqdm
 
 # config:
 epochs = 25  # 100
-batch_size = 16
+batch_size = 1
 lr = 1e-4
 weight_decay = 2e-5
 momentum = 0.9
@@ -25,23 +25,23 @@ torch.backends.cudnn.benchmark = True
 # print("GPUs: {}".format(torch.cuda.device_count()))
 
 dataset = VisDaDataset()
-dataloader = data.DataLoader(VisDaDataset, batch_size=batch_size, shuffle=True, num_workers=1, pin_memory=True)
+dataloader = data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=1, pin_memory=True)
 
-model = GCN(data.num_classes, data.img_size).cuda()
+model = GCN(dataset.num_classes, dataset.img_size).cuda()
 model.train()
 
 optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
-criterion = CrossEntropyLoss2d(weight=data.class_weights.cuda())
+criterion = CrossEntropyLoss2d(weight=dataset.class_weights.cuda())
 
 print("Starting training...")
 
 for epoch in range(epochs):
 
-	for (image, label) in tqdm.tqdm(dataloader):
-		#img = autograd.Variable(image.cuda())
-		#lbl = autograd.Variable(label.cuda())
-		img = autograd.Variable(image)
-		lbl = autograd.Variable(label)
+	for i, (image, label) in tqdm.tqdm(enumerate(dataloader)):
+		img = autograd.Variable(image.cuda())
+		lbl = autograd.Variable(label.cuda())
+		#img = autograd.Variable(image)
+		#lbl = autograd.Variable(label)
 
 		output = model(img)
 		loss = criterion(output, lbl)
