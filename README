@@ -3,9 +3,9 @@ Semantic Segmentation
 Felix Parker
 
 Implemented Architectures:
+- GCN
 
 Planned Architectures:
-- GCN
 - UNet
 - PSPNet
 
