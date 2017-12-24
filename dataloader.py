@@ -10,9 +10,20 @@ root_dir = "/home/flixpar/data/train"
 
 class VisDaDataLoader(data.Dataset):
 
-	num_classes = 19
+	num_classes = 35
 	class_weights = torch.ones(num_classes)
-	ignore_labels = []
+	ignore_labels = [0, 1, 2, 3]
+
+	labels = [(0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0), (20, 20, 20), (111, 74, 0), (81, 0, 81), (128, 64, 128),
+	          (244, 35, 232), (250, 170, 160), (230, 150, 140), (70, 70, 70), (102, 102, 156), (190, 153, 153),
+	          (180, 165, 180), (150, 100, 100), (150, 120, 90), (153, 153, 153), (153, 153, 153), (250, 170, 30),
+	          (220, 220, 0), (107, 142, 35), (152, 251, 152), (70, 130, 180), (220, 20, 60), (255, 0, 0), (0, 0, 142),
+	          (0, 0, 70), (0, 60, 100), (0, 0, 90), (0, 0, 110), (0, 80, 100), (0, 0, 230), (119, 11, 32), (0, 0, 142)]
+
+	names = ['unlabeled', 'ego vehicle', 'rectification border', 'out of roi', 'static', 'dynamic', 'ground', 'road',
+	         'sidewalk', 'parking', 'rail track', 'building', 'wall', 'fence', 'guard rail', 'bridge', 'tunnel',
+	         'pole', 'polegroup', 'traffic light', 'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider',
+	         'car', 'truck', 'bus', 'caravan', 'trailer', 'train', 'motorcycle', 'bicycle', 'license plate']
 
 	def __init__(self):
 
@@ -32,6 +43,8 @@ class VisDaDataLoader(data.Dataset):
 		img = cv2.imread(img_fn)
 		lbl = cv2.imread(lbl_fn, 0)
 
+		lbl = self.transform_labels(lbl)
+
 		img = torch.unsqueeze(torch.from_numpy(img).permute(2, 0, 1), 0).type(torch.FloatTensor)
 		lbl = torch.unsqueeze(torch.from_numpy(lbl), 0).type(torch.LongTensor)
 
@@ -41,3 +54,9 @@ class VisDaDataLoader(data.Dataset):
 
 	def __len__(self):
 		return self.size
+
+	def transform_labels(self, lbl):
+		out = np.zeros((lbl.shape[0], lbl.shape[1]))
+		for i, col in enumerate(self.labels):
+			out[lbl==col] = i
+		return out
