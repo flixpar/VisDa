@@ -7,6 +7,7 @@ from torch.utils import data
 
 root_dir = ""
 
+
 class VisDaDataLoader(data.Dataset):
 
 	num_classes = 0
@@ -15,11 +16,12 @@ class VisDaDataLoader(data.Dataset):
 
 	def __init__(self):
 
-		self.image_fnlist = sort(glob.glob(os.path.join(root_dir, "images", "*.png")))
-		self.label_fnlist = sort(glob.glob(os.path.join(root_dir, "annotations", "*.png")))
+		self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
+		self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
+		# self.image_fnlist = sorted(glob.glob(os.path.join(root_dir, "images", "*.png")))
+		# self.label_fnlist = sorted(glob.glob(os.path.join(root_dir, "annotations", "*.png")))
 
 		self.size = len(self.image_fnlist)
-
 		self.img_size = cv2.imread(self.image_fnlist[0]).size()[0]
 
 	def __getitem__(self, index):
