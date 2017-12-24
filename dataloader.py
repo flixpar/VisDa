@@ -32,6 +32,9 @@ class VisDaDataLoader(data.Dataset):
 		img = cv2.imread(img_fn)
 		lbl = cv2.imread(lbl_fn, 0)
 
+		img = torch.unsqueeze(torch.from_numpy(img).permute(2, 0, 1), 0).type(torch.FloatTensor)
+		lbl = torch.unsqueeze(torch.from_numpy(lbl))
+
 		return (img, lbl)
 
 	def __len__(self):

@@ -31,8 +31,8 @@ for epoch in range(epochs):
 
 	for (image, label) in data:
 
-		img = autograd.Variable(torch.unsqueeze(torch.from_numpy(image).permute(2, 0, 1), 0).type(torch.FloatTensor).cuda())
-		lbl = autograd.Variable(torch.unsqueeze(torch.from_numpy(label), 0).type(torch.LongTensor).cuda())
+		img = autograd.Variable(image.cuda())
+		lbl = autograd.Variable(label.cuda())
 
 		output = model(img)
 		loss = criterion(output, lbl)
