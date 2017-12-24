@@ -47,8 +47,9 @@ class VisDaDataLoader(data.Dataset):
 		lbl = self.transform_labels(lbl)
 
 		if (lbl.shape != self.shape):
-			img = cv2.resize(img, self.shape, cv2.INTER_LINEAR)
-			lbl = cv2.resize(lbl, self.shape, cv2.INTER_NEAREST)
+			size = (self.shape[1], self.shape[0])
+			img = cv2.resize(img, size, cv2.INTER_LINEAR)
+			lbl = cv2.resize(lbl, size, cv2.INTER_NEAREST)
 
 		img = torch.unsqueeze(torch.from_numpy(img).permute(2, 0, 1), 0).type(torch.FloatTensor)
 		lbl = torch.unsqueeze(torch.from_numpy(lbl), 0).type(torch.LongTensor)
