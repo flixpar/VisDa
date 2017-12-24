@@ -5,6 +5,7 @@ from torchvision import models
 import os
 from math import floor
 
+
 class _GlobalConvModule(nn.Module):
 	def __init__(self, in_dim, out_dim, kernel_size):
 		super(_GlobalConvModule, self).__init__()
@@ -25,6 +26,7 @@ class _GlobalConvModule(nn.Module):
 		x = x_l + x_r
 		return x
 
+
 class _BoundaryRefineModule(nn.Module):
 	def __init__(self, dim):
 		super(_BoundaryRefineModule, self).__init__()
@@ -38,6 +40,7 @@ class _BoundaryRefineModule(nn.Module):
 		residual = self.conv2(residual)
 		out = x + residual
 		return out
+
 
 class GCN(nn.Module):
 	def __init__(self, num_classes, input_size):
@@ -73,10 +76,9 @@ class GCN(nn.Module):
 		self.brm9 = _BoundaryRefineModule(num_classes)
 
 		initialize_weights(self.gcm1, self.gcm2, self.gcm3, self.gcm4, self.brm1, self.brm2, self.brm3,
-							self.brm4, self.brm5, self.brm6, self.brm7, self.brm8, self.brm9)
+		                   self.brm4, self.brm5, self.brm6, self.brm7, self.brm8, self.brm9)
 
 	def forward(self, x):
-
 		fm0 = self.layer0(x)
 		fm1 = self.layer1(fm0)
 		fm2 = self.layer2(fm1)
@@ -93,10 +95,6 @@ class GCN(nn.Module):
 		fs3 = self.brm7(F.upsample(fs2, fm1.size()[2:], mode='bilinear') + gcfm4)
 		fs4 = self.brm8(F.upsample(fs3, fm0.size()[2:], mode='bilinear'))
 		out = self.brm9(F.upsample(fs4, self.input_size, mode='bilinear'))
-
-		print(out.size())
-		print(self.input_size)
-		print()
 
 		return out
 

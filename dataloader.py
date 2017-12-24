@@ -9,7 +9,6 @@ root_dir = "/home/flixpar/data/train"
 
 
 class VisDaDataLoader(data.Dataset):
-
 	num_classes = 35
 	class_weights = torch.ones(num_classes)
 	ignore_labels = [0, 1, 2, 3]
@@ -26,7 +25,6 @@ class VisDaDataLoader(data.Dataset):
 	         'car', 'truck', 'bus', 'caravan', 'trailer', 'train', 'motorcycle', 'bicycle', 'license plate']
 
 	def __init__(self):
-
 		self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
 		self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
 		# self.image_fnlist = sorted(glob.glob(os.path.join(root_dir, "images", "*.png")))
@@ -36,15 +34,14 @@ class VisDaDataLoader(data.Dataset):
 		self.img_size = cv2.imread(self.image_fnlist[0]).shape[0:2]
 
 	def __getitem__(self, index):
-
 		img_fn = self.image_fnlist[index]
 		lbl_fn = self.label_fnlist[index]
 
 		img = cv2.imread(img_fn)
 		lbl = cv2.imread(lbl_fn, 0)
 
-		assert(img.shape[0] == lbl.shape[0])
-		assert(img.shape[1] == lbl.shape[1])
+		assert (img.shape[0] == lbl.shape[0])
+		assert (img.shape[1] == lbl.shape[1])
 
 		print("shape:")
 		print(img.shape)
@@ -65,5 +62,5 @@ class VisDaDataLoader(data.Dataset):
 	def transform_labels(self, lbl):
 		out = np.zeros((lbl.shape[0], lbl.shape[1]))
 		for i, col in enumerate(self.labels):
-			out[lbl==col] = i
+			out[lbl == col] = i
 		return out
