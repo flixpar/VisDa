@@ -7,6 +7,7 @@ from dataloader import VisDaDataLoader
 from gcn import GCN
 from util import CrossEntropyLoss2d
 from util import cross_entropy2d
+from util import CrossEntropyLoss2dMax
 
 import os
 
@@ -29,7 +30,8 @@ model = GCN(data.num_classes, data.img_size).cuda()
 model.train()
 
 optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
-criterion = CrossEntropyLoss2d(weight=data.class_weights.cuda())
+criterion = CrossEntropyLoss2dMax(weight=data.class_weights.cuda())
+#criterion = CrossEntropyLoss2d(weight=data.class_weights.cuda())
 #criterion = nn.CrossEntropyLoss(data.class_weights.cuda())
 #criterion = nn.NLLLoss2d(data.class_weights.cuda())
 
