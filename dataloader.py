@@ -8,7 +8,7 @@ from torch.utils import data
 root_dir = "/home/flixpar/data/train"
 
 
-class VisDaDataLoader(data.Dataset):
+class VisDaDataset(data.Dataset):
 	num_classes = 35
 	class_weights = torch.ones(num_classes)
 	ignore_labels = [0, 1, 2, 3]
@@ -41,8 +41,11 @@ class VisDaDataLoader(data.Dataset):
 		img = cv2.imread(img_fn)
 		lbl = cv2.imread(lbl_fn, 0)
 
-		assert (img.shape[0] == lbl.shape[0])
-		assert (img.shape[1] == lbl.shape[1])
+		if (img.shape[0] != lbl.shape[0] || img.shape[1] != lbl.shape[1])
+			return self.__getitem__(index+1)
+
+		#assert (img.shape[0] == lbl.shape[0])
+		#assert (img.shape[1] == lbl.shape[1])
 
 		lbl = self.transform_labels(lbl)
 
