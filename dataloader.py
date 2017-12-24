@@ -22,7 +22,7 @@ class VisDaDataLoader(data.Dataset):
 		# self.label_fnlist = sorted(glob.glob(os.path.join(root_dir, "annotations", "*.png")))
 
 		self.size = len(self.image_fnlist)
-		self.img_size = cv2.imread(self.image_fnlist[0]).shape[0]
+		self.img_size = cv2.imread(self.image_fnlist[0]).shape[0:1]
 
 	def __getitem__(self, index):
 
