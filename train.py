@@ -9,28 +9,30 @@ from gcn import GCN
 import os
 
 # config:
-epochs = 100
+epochs = 25 #100
 batch_size = 1
 lr = 1e-4
 weight_decay = 2e-5
 momentum = 0.9
 
-base_path = ""
+base_path = "/home/flixpar/VisDa"
 save_path = os.path.join(base_path, "saves", "gcn-%d.pth")
 
 data = VisDaDataLoader()
-model = GCN(data.num_classes, data.img_size)
-model.cuda()
+model = GCN(data.num_classes, data.img_size).cuda()
+model.train()
 
 optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
 criterion = nn.CrossEntropyLoss(data.class_weights.cuda())
+
+print("Starting training...")
 
 for epoch in range(epochs):
 
 	for (image, label) in data:
 
-		img = autograd.Variable(image.cuda())
-		lbl = autograd.Variable(label.cuda())
+		img = autograd.Variable(torch.unsqueeze(torch.from_numpy(image).permute(2, 0, 1), 0).type(torch.FloatTensor).cuda())
+		lbl = autograd.Variable(torch.unsqueeze(torch.from_numpy(label), 0).type(torch.LongTensor).cuda())
 
 		output = model(img)
 		loss = criterion(output, lbl)
@@ -38,6 +40,8 @@ for epoch in range(epochs):
 		optimizer.zero_grad()
 		loss.backward()
 		optimizer.step()
+
+	print("Epoch {} completed.".format(epoch+1))
 
 	if (epoch + 1) % 25 == 0:
 		lr /= 5
