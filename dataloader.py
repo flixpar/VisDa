@@ -43,6 +43,13 @@ class VisDaDataLoader(data.Dataset):
 		img = cv2.imread(img_fn)
 		lbl = cv2.imread(lbl_fn, 0)
 
+		assert(img.shape[0] == lbl.shape[0])
+		assert(img.shape[1] == lbl.shape[1])
+
+		print("shape:")
+		print(img.shape)
+		print(lbl.shape)
+
 		lbl = self.transform_labels(lbl)
 
 		img = torch.unsqueeze(torch.from_numpy(img).permute(2, 0, 1), 0).type(torch.FloatTensor)
