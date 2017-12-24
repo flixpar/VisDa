@@ -8,6 +8,7 @@ from gcn import GCN
 from util import CrossEntropyLoss2d
 
 import os
+import tqdm
 
 # config:
 epochs = 25  # 100
@@ -34,7 +35,7 @@ print("Starting training...")
 
 for epoch in range(epochs):
 
-	for (image, label) in data:
+	for (image, label) in tqdm.tqdm(data):
 		img = autograd.Variable(image.cuda())
 		lbl = autograd.Variable(label.cuda())
 
