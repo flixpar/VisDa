@@ -94,6 +94,10 @@ class GCN(nn.Module):
 		fs4 = self.brm8(F.upsample(fs3, fm0.size()[2:], mode='bilinear'))
 		out = self.brm9(F.upsample(fs4, self.input_size, mode='bilinear'))
 
+		print(out.size())
+		print(self.input_size)
+		print()
+
 		return out
 
 
