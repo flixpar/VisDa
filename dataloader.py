@@ -12,6 +12,7 @@ class VisDaDataLoader(data.Dataset):
 	num_classes = 35
 	class_weights = torch.ones(num_classes)
 	ignore_labels = [0, 1, 2, 3]
+	shape = (1052, 1914)
 
 	labels = [(0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0), (20, 20, 20), (111, 74, 0), (81, 0, 81), (128, 64, 128),
 	          (244, 35, 232), (250, 170, 160), (230, 150, 140), (70, 70, 70), (102, 102, 156), (190, 153, 153),
@@ -43,11 +44,11 @@ class VisDaDataLoader(data.Dataset):
 		assert (img.shape[0] == lbl.shape[0])
 		assert (img.shape[1] == lbl.shape[1])
 
-		print("shape:")
-		print(img.shape)
-		print(lbl.shape)
-
 		lbl = self.transform_labels(lbl)
+
+		if (lbl.shape != self.shape):
+			img = cv2.resize(img, self.shape, cv2.INTER_LINEAR)
+			lbl = cv2.resize(lbl, self.shape, cv2.INTER_NEAREST)
 
 		img = torch.unsqueeze(torch.from_numpy(img).permute(2, 0, 1), 0).type(torch.FloatTensor)
 		lbl = torch.unsqueeze(torch.from_numpy(lbl), 0).type(torch.LongTensor)
