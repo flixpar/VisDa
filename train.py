@@ -18,7 +18,11 @@ momentum = 0.9
 base_path = "/home/flixpar/VisDa"
 save_path = os.path.join(base_path, "saves", "gcn-%d.pth")
 
+torch.backends.cudnn.benchmark=True
+print("GPUs: {}".format(torch.cuda.device_count()))
+
 data = VisDaDataLoader()
+
 model = GCN(data.num_classes, data.img_size).cuda()
 model.train()
 
