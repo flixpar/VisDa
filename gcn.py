@@ -3,13 +3,14 @@ import torch.nn.functional as F
 from torch import nn
 from torchvision import models
 import os
+from math import floor
 
 class _GlobalConvModule(nn.Module):
 	def __init__(self, in_dim, out_dim, kernel_size):
 		super(_GlobalConvModule, self).__init__()
 
-		pad0 = (kernel_size[0] - 1) / 2
-		pad1 = (kernel_size[1] - 1) / 2
+		pad0 = floor((kernel_size[0] - 1) / 2)
+		pad1 = floor((kernel_size[1] - 1) / 2)
 
 		self.conv_l1 = nn.Conv2d(in_dim, out_dim, kernel_size=(kernel_size[0], 1), padding=(pad0, 0))
 		self.conv_l2 = nn.Conv2d(out_dim, out_dim, kernel_size=(1, kernel_size[1]), padding=(0, pad1))
@@ -45,7 +46,7 @@ class GCN(nn.Module):
 		self.input_size = input_size
 
 		# https://download.pytorch.org/models/resnet152-b121ed2d.pth
-		res152_path = os.path.join('~/data', 'ResNet', 'resnet152.pth')
+		res152_path = os.path.join('/home/flixpar/data', 'ResNet', 'resnet152.pth')
 
 		resnet = models.resnet152()
 		resnet.load_state_dict(torch.load(res152_path))
