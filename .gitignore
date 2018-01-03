@@ -2,3 +2,5 @@
 *.png
 __pycache__/
 saves/
+save*
+*.log

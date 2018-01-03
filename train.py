@@ -12,7 +12,7 @@ import os
 from tqdm import tqdm
 
 # config:
-epochs = 25  # 100
+epochs = 25
 batch_size = 4
 lr = 2e-6
 weight_decay = 1e-6
@@ -20,6 +20,9 @@ momentum = 0.95
 
 base_path = "/home/flixpar/VisDa"
 save_path = os.path.join(base_path, "saves", "gcn-%d.pth")
+
+log_file_path = "/home/flixpar/VisDa/train.log"
+log_file = open(log_file_path, 'w')
 
 torch.backends.cudnn.benchmark = True
 # print("GPUs: {}".format(torch.cuda.device_count()))
@@ -50,8 +53,10 @@ for epoch in range(epochs):
 
 		if i % 100 == 0:
 			tqdm.write("loss: {}".format(loss.data[0]))
+			log_file.write(str(loss.data[0]))
 
 	print("Epoch {} completed.".format(epoch + 1))
+	log_file.write("Epoch {} completed.".format(epoch + 1))
 
 	#if (epoch + 1) % 25 == 0:
 	if True:

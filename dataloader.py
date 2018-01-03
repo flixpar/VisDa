@@ -30,9 +30,9 @@ class VisDaDataset(data.Dataset):
 	         'pole', 'polegroup', 'traffic light', 'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider',
 	         'car', 'truck', 'bus', 'caravan', 'trailer', 'train', 'motorcycle', 'bicycle', 'license plate']
 
-	class_weights = [0.471072493982, 0.0, 0.0, 0.0, 0.00181448729946, 0.0, 0.00267729106253, 0.324546718887,
+	class_weights = torch.FloatTensor([0.471072493982, 0.0, 0.0, 0.0, 0.00181448729946, 0.0, 0.00267729106253, 0.324546718887,
 			0.0, 0.0, 0.0, 0.167350940922, 0.0, 0.0, 0.000255553958685, 0.0, 0.0, 0.0, 0.0106366173936,
-			0.0, 0.0, 0.0, 0.0216458964943, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+			0.0, 0.0, 0.0, 0.0216458964943, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
 	def __init__(self):
 		self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
@@ -74,6 +74,6 @@ class VisDaDataset(data.Dataset):
 	def transform_labels(self, lbl):
 		out = np.zeros((lbl.shape[0], lbl.shape[1]))
 		for i, col in enumerate(self.labels):
-			if i in ignore_labels: continue
+			if i in self.ignore_labels: continue
 			out[np.where(np.all(lbl == col, axis=-1))] = i
 		return out
