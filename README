@@ -12,7 +12,6 @@ Planned Architectures:
 Todo:
 - implement transforms
 - find class weights
-- find per channel image mean and stdev
 - try loss functions
 - try optimizers
 - test hyperparameters
