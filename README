@@ -11,7 +11,6 @@ Planned Architectures:
 
 Todo:
 - implement transforms
-- find class weights
 - try loss functions
 - try optimizers
 - test hyperparameters

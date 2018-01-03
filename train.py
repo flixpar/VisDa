@@ -31,7 +31,7 @@ model = GCN(dataset.num_classes, dataset.img_size).cuda()
 model.train()
 
 optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay, nesterov=True)
-criterion = CrossEntropyLoss2d().cuda()
+criterion = CrossEntropyLoss2d(weight=dataset.class_weights).cuda()
 
 print("Starting training...")
 

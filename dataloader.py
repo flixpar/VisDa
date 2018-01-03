@@ -9,11 +9,12 @@ root_dir = "/home/flixpar/data/train"
 
 
 class VisDaDataset(data.Dataset):
+
 	num_classes = 35
-	class_weights = torch.ones(num_classes)
 	ignore_labels = [0, 1, 2, 3]
-	#shape = (1052, 1914)
 	shape = (526, 957)
+
+	# shape = (1052, 1914)
 
 	img_mean = np.array([108.56263368194266, 111.92560322135374, 113.01417537462997])
 	img_stdev = 60
@@ -28,6 +29,10 @@ class VisDaDataset(data.Dataset):
 	         'sidewalk', 'parking', 'rail track', 'building', 'wall', 'fence', 'guard rail', 'bridge', 'tunnel',
 	         'pole', 'polegroup', 'traffic light', 'traffic sign', 'vegetation', 'terrain', 'sky', 'person', 'rider',
 	         'car', 'truck', 'bus', 'caravan', 'trailer', 'train', 'motorcycle', 'bicycle', 'license plate']
+
+	class_weights = [0.471072493982, 0.0, 0.0, 0.0, 0.00181448729946, 0.0, 0.00267729106253, 0.324546718887,
+			0.0, 0.0, 0.0, 0.167350940922, 0.0, 0.0, 0.000255553958685, 0.0, 0.0, 0.0, 0.0106366173936,
+			0.0, 0.0, 0.0, 0.0216458964943, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
 
 	def __init__(self):
 		self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
