@@ -12,8 +12,11 @@ class VisDaDataset(data.Dataset):
 	num_classes = 35
 	class_weights = torch.ones(num_classes)
 	ignore_labels = [0, 1, 2, 3]
-	shape = (1052, 1914)
-	#shape = (526, 957)
+	#shape = (1052, 1914)
+	shape = (526, 957)
+
+	img_mean = np.array([108.56263368194266, 111.92560322135374, 113.01417537462997])
+	img_stdev = 60
 
 	labels = [(0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0), (20, 20, 20), (111, 74, 0), (81, 0, 81), (128, 64, 128),
 	          (244, 35, 232), (250, 170, 160), (230, 150, 140), (70, 70, 70), (102, 102, 156), (190, 153, 153),
@@ -29,8 +32,6 @@ class VisDaDataset(data.Dataset):
 	def __init__(self):
 		self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
 		self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
-		# self.image_fnlist = sorted(glob.glob(os.path.join(root_dir, "images", "*.png")))
-		# self.label_fnlist = sorted(glob.glob(os.path.join(root_dir, "annotations", "*.png")))
 
 		self.size = len(self.image_fnlist)
 		#self.img_size = cv2.imread(self.image_fnlist[0]).shape[0:2]
@@ -41,13 +42,10 @@ class VisDaDataset(data.Dataset):
 		lbl_fn = self.label_fnlist[index]
 
 		img = cv2.imread(img_fn)
-		lbl = cv2.imread(lbl_fn, 0)
+		lbl = cv2.imread(lbl_fn)
 
 		if (img.shape[0] != lbl.shape[0] or img.shape[1] != lbl.shape[1]):
 			return self.__getitem__(index+1)
-
-		#assert (img.shape[0] == lbl.shape[0])
-		#assert (img.shape[1] == lbl.shape[1])
 
 		if (lbl.shape != self.shape):
 			size = (self.shape[1], self.shape[0])
@@ -56,10 +54,12 @@ class VisDaDataset(data.Dataset):
 
 		lbl = self.transform_labels(lbl)
 
+		# normalize the image:
+		img = img - self.img_mean
+		img /= self.img_stdev
+
 		img = torch.from_numpy(img).permute(2, 0, 1).type(torch.FloatTensor)
 		lbl = torch.from_numpy(lbl).type(torch.LongTensor)
-
-		img = img / 255.0
 
 		return (img, lbl)
 
@@ -69,5 +69,6 @@ class VisDaDataset(data.Dataset):
 	def transform_labels(self, lbl):
 		out = np.zeros((lbl.shape[0], lbl.shape[1]))
 		for i, col in enumerate(self.labels):
-			out[lbl == col] = i
+			if i in ignore_labels: continue
+			out[np.where(np.all(lbl == col, axis=-1))] = i
 		return out
