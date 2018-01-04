@@ -43,9 +43,10 @@ class _BoundaryRefineModule(nn.Module):
 
 
 class GCN(nn.Module):
-	def __init__(self, num_classes, input_size):
+	def __init__(self, num_classes, input_size, k=7):
 		super(GCN, self).__init__()
 
+		self.K = k
 		self.input_size = input_size
 
 		# https://download.pytorch.org/models/resnet152-b121ed2d.pth
@@ -60,10 +61,10 @@ class GCN(nn.Module):
 		self.layer3 = resnet.layer3
 		self.layer4 = resnet.layer4
 
-		self.gcm1 = _GlobalConvModule(2048, num_classes, (7, 7))
-		self.gcm2 = _GlobalConvModule(1024, num_classes, (7, 7))
-		self.gcm3 = _GlobalConvModule(512, num_classes, (7, 7))
-		self.gcm4 = _GlobalConvModule(256, num_classes, (7, 7))
+		self.gcm1 = _GlobalConvModule(2048, num_classes, (self.K, self.K))
+		self.gcm2 = _GlobalConvModule(1024, num_classes, (self.K, self.K))
+		self.gcm3 = _GlobalConvModule(512, num_classes, (self.K, self.K))
+		self.gcm4 = _GlobalConvModule(256, num_classes, (self.K, self.K))
 
 		self.brm1 = _BoundaryRefineModule(num_classes)
 		self.brm2 = _BoundaryRefineModule(num_classes)
@@ -76,7 +77,7 @@ class GCN(nn.Module):
 		self.brm9 = _BoundaryRefineModule(num_classes)
 
 		initialize_weights(self.gcm1, self.gcm2, self.gcm3, self.gcm4, self.brm1, self.brm2, self.brm3,
-		                   self.brm4, self.brm5, self.brm6, self.brm7, self.brm8, self.brm9)
+					self.brm4, self.brm5, self.brm6, self.brm7, self.brm8, self.brm9)
 
 	def forward(self, x):
 		fm0 = self.layer0(x)

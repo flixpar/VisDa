@@ -12,9 +12,9 @@ class VisDaDataset(data.Dataset):
 
 	num_classes = 35
 	ignore_labels = [0, 1, 2, 3]
-	shape = (526, 957)
 
-	# shape = (1052, 1914)
+	# shape = (526, 957)
+	shape = (1052, 1914)
 
 	img_mean = np.array([108.56263368194266, 111.92560322135374, 113.01417537462997])
 	img_stdev = 60
@@ -34,13 +34,14 @@ class VisDaDataset(data.Dataset):
 			0.0, 0.0, 0.0, 0.167350940922, 0.0, 0.0, 0.000255553958685, 0.0, 0.0, 0.0, 0.0106366173936,
 			0.0, 0.0, 0.0, 0.0216458964943, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
-	def __init__(self):
+	def __init__(self, size=self.shape):
 		self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
 		self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
 
 		self.size = len(self.image_fnlist)
 		#self.img_size = cv2.imread(self.image_fnlist[0]).shape[0:2]
-		self.img_size = self.shape
+		self.img_size = size # self.shape
+		self.shape = size
 
 	def __getitem__(self, index):
 		img_fn = self.image_fnlist[index]

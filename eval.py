@@ -9,7 +9,7 @@ import numpy as np
 from dataloader import VisDaDataset
 from metrics import scores
 
-save_path = "/home/flixpar/VisDa/saves/gcn-9.pth"
+save_path = "/home/flixpar/VisDa/saves/gcn-12.pth"
 samples = 5
 out_path = "/home/flixpar/VisDa/pred/"
 
