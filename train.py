@@ -16,11 +16,11 @@ max_epochs = 20
 batch_size = 2
 lr = 2e-5
 weight_decay = 0.0005
-momentum = 0.99
-K = 7
+momentum = 0.98
+K = 15
 scale_factor = 0.8
 img_size = (int(scale_factor * 1052), int(scale_factor * 1914))
-lr_decay_freq = 2
+lr_decay_freq = 1
 lr_decay_rate = 2
 
 base_path = "/home/flixpar/VisDa"
