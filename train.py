@@ -14,11 +14,12 @@ from tqdm import tqdm
 # config:
 max_epochs = 20
 batch_size = 2
-lr = 2e-3
+lr = 2e-5
 weight_decay = 0.0005
 momentum = 0.99
 K = 7
-img_size = (1052, 1914)
+scale_factor = 0.8
+img_size = (int(scale_factor * 1052), int(scale_factor * 1914))
 lr_decay_freq = 2
 lr_decay_rate = 2
 
@@ -31,7 +32,7 @@ log_file = open(log_file_path, 'w')
 torch.backends.cudnn.benchmark = True
 # print("GPUs: {}".format(torch.cuda.device_count()))
 
-dataset = VisDaDataset(img_size=img_size)
+dataset = VisDaDataset(im_size=img_size)
 dataloader = data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=6)
 
 model = GCN(dataset.num_classes, dataset.img_size, k=K).cuda()

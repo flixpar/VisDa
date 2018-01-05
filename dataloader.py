@@ -34,14 +34,14 @@ class VisDaDataset(data.Dataset):
 			0.0, 0.0, 0.0, 0.167350940922, 0.0, 0.0, 0.000255553958685, 0.0, 0.0, 0.0, 0.0106366173936,
 			0.0, 0.0, 0.0, 0.0216458964943, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
-	def __init__(self, size=self.shape):
+	def __init__(self, im_size=shape):
 		self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
 		self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
 
 		self.size = len(self.image_fnlist)
 		#self.img_size = cv2.imread(self.image_fnlist[0]).shape[0:2]
-		self.img_size = size # self.shape
-		self.shape = size
+		self.img_size = im_size # self.shape
+		self.shape = im_size
 
 	def __getitem__(self, index):
 		img_fn = self.image_fnlist[index]
