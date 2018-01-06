@@ -3,19 +3,19 @@ from torch import nn
 from torch.utils import data
 from torch.autograd import Variable
 torch.backends.cudnn.benchmark = True
-from gcn import GCN
+
 import numpy as np
 import yaml
+import os
 
-from dataloader import VisDaDataset
-from metrics import scores
-
-from inference import predict, print_scores
+from models.gcn import GCN
+from loaders.dataloader import VisDaDataset
+from util.metrics import scores, miou, class_iou, print_scores
+from util.util import Namespace
 
 # config:
 config_path = "/home/flixpar/VisDa/config.yaml"
 args = Namespace(**yaml.load(open(config_path, 'r')))
-args.img_size = tuple(args.img_size)
 
 samples = 50
 epoch = 8
@@ -40,18 +40,23 @@ def main():
 		if i == samples:
 			break
 
-		img = Variable(image.cuda())
-		output = model(img)
-
-		pred = np.squeeze(output.data.max(1)[1].cpu().numpy())
+		pred = predict(image)
 		gt = np.squeeze(Variable(truth).data.cpu().numpy())
 
-		score, class_iou = scores(gt, pred, dataset.num_classes)
-		iou += score['Mean IoU : \t']
+		iou += miou(gt, pred, dataset.num_classes)
+		# score, class_iou = scores(gt, pred, dataset.num_classes)
 		# print_scores(i+1, score, class_iou)
 
 	iou /= samples
 	print("Mean IOU: {}".format(iou))
+
+def predict(img):
+
+	img = Variable(img.cuda())
+	output = model(img)
+	pred = np.squeeze(output.data.max(1)[1].cpu().numpy())
+
+	return pred
 
 if __name__ == "__main__":
 	main()
