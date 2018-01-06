@@ -7,6 +7,7 @@ torch.backends.cudnn.benchmark = True
 import numpy as np
 import yaml
 import os
+import cv2
 
 from models.gcn import GCN
 from loaders.dataloader import VisDaDataset
@@ -15,7 +16,7 @@ from util.util import Namespace
 
 import torch.nn.functional as F
 import pydensecrf.densecrf as dcrf
-from pydensecrf.utils import compute_unary, create_pairwise_bilateral, create_pairwise_gaussian, softmax_to_unary
+from pydensecrf.utils import compute_unary, create_pairwise_bilateral, create_pairwise_gaussian, unary_from_softmax
 
 
 # config:
@@ -45,9 +46,12 @@ def main():
 		if i == samples:
 			break
 
-		# pred = predict(image)
-		pred = pred_crf(image)
-		gt = np.squeeze(Variable(truth).data.cpu().numpy())
+		pred = predict(image)
+		# pred = pred_crf(image)
+		gt = np.squeeze(truth.cpu().numpy())
+
+		save_anno(pred, i, gt=False)
+		save_anno(gt, i, gt=True)
 
 		iou += miou(gt, pred, dataset.num_classes)
 		# score, class_iou = scores(gt, pred, dataset.num_classes)
@@ -75,7 +79,7 @@ def pred_crf(img):
 
 	d = dcrf.DenseCRF2D(image.shape[1], image.shape[2], 35)
 
-	unary = softmax_to_unary(pred)
+	unary = unary_from_softmax(np.ascontiguousarray(pred))
 	unary = np.ascontiguousarray(unary)
 	d.setUnaryEnergy(unary)
 
@@ -91,16 +95,35 @@ def pred_crf(img):
 	
 	Q = d.inference(5)
 	res = np.argmax(Q, axis=0).reshape((image.shape[1], image.shape[2]))
-
 	return res
 
 def reverse_img_norm(image):
 	img_mean = np.array([108.56263368194266, 111.92560322135374, 113.01417537462997])
 	img_stdev = 60
+	image = image.transpose(2, 1, 0)
 	image *= img_stdev
 	image += img_mean
 	image = image.astype(np.uint8)
+	image = np.ascontiguousarray(image)
 	return image
+
+def recolor(lbl):
+	labels = [(0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0), (20, 20, 20), (111, 74, 0), (81, 0, 81), (128, 64, 128),
+	          (244, 35, 232), (250, 170, 160), (230, 150, 140), (70, 70, 70), (102, 102, 156), (190, 153, 153),
+	          (180, 165, 180), (150, 100, 100), (150, 120, 90), (153, 153, 153), (153, 153, 153), (250, 170, 30),
+	          (220, 220, 0), (107, 142, 35), (152, 251, 152), (70, 130, 180), (220, 20, 60), (255, 0, 0), (0, 0, 142),
+	          (0, 0, 70), (0, 60, 100), (0, 0, 90), (0, 0, 110), (0, 80, 100), (0, 0, 230), (119, 11, 32), (0, 0, 142)]
+
+	out = np.zeros((lbl.shape[0], lbl.shape[1], 3))
+	for i in range(len(labels)):
+		out[lbl==i] = labels[i]
+	return out
+
+def save_anno(lbl, num, gt=True):
+	fn = "gt{}.png".format(num) if gt else "pred{}.png".format(num)
+	path = os.path.join(out_path, fn)
+	col = recolor(lbl)
+	cv2.imwrite(path, col)
 
 if __name__ == "__main__":
 	main()
