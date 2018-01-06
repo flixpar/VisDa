@@ -1,22 +1,22 @@
 {
-	max_epochs: 20,
-	batch_size: 2,
+max_epochs: 20,
+batch_size: 2,
 
-	lr: 2e-5,
-	weight_decay: 0.0005,
-	momentum: 0.98,
+lr: !!float 2e-5,
+weight_decay: 0.0005,
+momentum: 0.98,
 
-	K: 15,
+K: 15,
 
-	scale_factor: 0.8,
-	default_img_size: !!python/tuple [1052, 1914],
-	img_size: !!python/tuple [841, 1531],
+scale_factor: 0.8,
+default_img_size: !!python/tuple [1052, 1914],
+img_size: !!python/tuple [841, 1531],
 
-	lr_decay_freq: 1,
-	lr_power: 0.9,
+lr_decay_freq: 1,
+lr_power: 0.9,
 
-	eval_freq: 2000,
+eval_freq: 2000,
 
-	base_path: "/home/flixpar/VisDa",
-	base_data_path: "/media/data/train/",
+base_path: "/home/flixpar/VisDa",
+base_data_path: "/media/data/train/",
 }
