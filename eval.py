@@ -22,8 +22,8 @@ from pydensecrf.utils import compute_unary, create_pairwise_bilateral, create_pa
 config_path = "/home/flixpar/VisDa/config.yaml"
 args = Namespace(**yaml.load(open(config_path, 'r')))
 
-samples = 50
-epoch = 8
+samples = 5
+epoch = 1
 
 save_path = "/home/flixpar/VisDa/saves/gcn-{}.pth".format(epoch)
 out_path = "/home/flixpar/VisDa/pred/"
@@ -45,7 +45,8 @@ def main():
 		if i == samples:
 			break
 
-		pred = predict(image)
+		# pred = predict(image)
+		pred = pred_crf(image)
 		gt = np.squeeze(Variable(truth).data.cpu().numpy())
 
 		iou += miou(gt, pred, dataset.num_classes)
@@ -67,13 +68,12 @@ def pred_crf(img):
 
 	img = Variable(img.cuda())
 	output = model(img)
-	pred = np.squeeze(output.cpu().numpy())
-	pred = F.log_softmax(inputs, dim=0)
+	pred = F.log_softmax(output, dim=1)
 
-	image = img.cpu().numpy()
-	pred = pred.cpu().numpy()
+	image = np.squeeze(img.data.cpu().numpy())
+	pred = np.squeeze(pred.data.cpu().numpy())
 
-	d = dcrf.DenseCRF2D(image.shape[0], image.shape[1], 35)
+	d = dcrf.DenseCRF2D(image.shape[1], image.shape[2], 35)
 
 	unary = softmax_to_unary(pred)
 	unary = np.ascontiguousarray(unary)
@@ -90,7 +90,7 @@ def pred_crf(img):
 		kernel=dcrf.DIAG_KERNEL, normalization=dcrf.NORMALIZE_SYMMETRIC)
 	
 	Q = d.inference(5)
-	res = np.argmax(Q, axis=0).reshape((image.shape[0], image.shape[1]))
+	res = np.argmax(Q, axis=0).reshape((image.shape[1], image.shape[2]))
 
 	return res
 
