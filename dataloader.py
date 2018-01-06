@@ -5,7 +5,7 @@ import torch
 import cv2
 from torch.utils import data
 
-root_dir = "/home/flixpar/data/train"
+root_dir = "/media/data/train"
 
 
 class VisDaDataset(data.Dataset):

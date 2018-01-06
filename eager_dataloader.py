@@ -4,9 +4,11 @@ import numpy as np
 import torch
 import cv2
 from torch.utils import data
-import multiprocessing as mp
 
-root_dir = "/home/flixpar/data/train"
+import multiprocessing as mp
+PROCESSORS = 8
+
+root_dir = "/media/data/train"
 
 
 class EagerVisDaDataset(data.Dataset):
