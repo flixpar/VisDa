@@ -3,6 +3,7 @@ from torch import nn
 from torch import optim
 from torch import autograd
 from torch.utils import data
+torch.backends.cudnn.benchmark = True
 
 from dataloader import VisDaDataset
 from gcn import GCN
@@ -10,41 +11,31 @@ from util import CrossEntropyLoss2d
 
 import os
 from tqdm import tqdm
+import yaml
 
 # config:
-max_epochs = 20
-batch_size = 2
-lr = 2e-5
-weight_decay = 0.0005
-momentum = 0.98
-K = 15
-scale_factor = 0.8
-img_size = (int(scale_factor * 1052), int(scale_factor * 1914))
-lr_decay_freq = 1
-lr_decay_rate = 2
+config_path = "/home/flixpar/VisDa/config.yaml"
+args = Namespace(**yaml.load(open(config_path, 'r')))
+args.img_size = tuple(args.img_size)
 
-base_path = "/home/flixpar/VisDa"
-save_path = os.path.join(base_path, "saves", "gcn-{}.pth")
+save_path = os.path.join(args.base_path, "saves", "gcn-{}.pth")
 
-log_file_path = os.path.join(base_path, "saves", "train.log")
+log_file_path = os.path.join(args.base_path, "saves", "train.log")
 log_file = open(log_file_path, 'w')
 
-torch.backends.cudnn.benchmark = True
-# print("GPUs: {}".format(torch.cuda.device_count()))
+dataset = VisDaDataset(im_size=args.img_size)
+dataloader = data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=6)
 
-dataset = VisDaDataset(im_size=img_size)
-dataloader = data.DataLoader(dataset, batch_size=batch_size, shuffle=True, num_workers=6)
-
-model = GCN(dataset.num_classes, dataset.img_size, k=K).cuda()
+model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
 model.train()
 
-optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay, nesterov=True)
+optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
 criterion = CrossEntropyLoss2d(weight=dataset.class_weights).cuda()
 
 print("Starting training...")
-for epoch in range(max_epochs):
+for epoch in range(args.max_epochs):
 
-	for i, (image, label) in tqdm(enumerate(dataloader), total=int(len(dataset)/batch_size)):
+	for i, (image, label) in tqdm(enumerate(dataloader), total=int(len(dataset)/args.batch_size)):
 		img = autograd.Variable(image.cuda())
 		lbl = autograd.Variable(label.cuda())
 
@@ -63,9 +54,9 @@ for epoch in range(max_epochs):
 	log_file.write("Epoch {} completed.\n".format(epoch + 1))
 	torch.save(model.state_dict(), save_path.format(epoch + 1))
 
-	if (epoch + 1) % lr_decay_freq == 0:
-		lr /= lr_decay_rate
-		optimizer = optim.SGD(model.parameters(), lr=lr, momentum=momentum, weight_decay=weight_decay)
+	if (epoch + 1) % args.lr_decay_freq == 0:
+		args.lr /= args.lr_decay_rate
+		optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
 
 
 torch.save(model.state_dict(), save_path.format("final"))

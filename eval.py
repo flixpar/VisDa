@@ -5,22 +5,28 @@ from torch.autograd import Variable
 torch.backends.cudnn.benchmark = True
 from gcn import GCN
 import numpy as np
+import yaml
 
 from dataloader import VisDaDataset
 from metrics import scores
 
-save_path = "/home/flixpar/VisDa/saves/gcn-8.pth"
+from inference import predict, print_scores
+
+# config:
+config_path = "/home/flixpar/VisDa/config.yaml"
+args = Namespace(**yaml.load(open(config_path, 'r')))
+args.img_size = tuple(args.img_size)
+
 samples = 50
+epoch = 8
+
+save_path = "/home/flixpar/VisDa/saves/gcn-{}.pth".format(epoch)
 out_path = "/home/flixpar/VisDa/pred/"
 
-K = 7
-scale_factor = 0.8
-img_size = (int(scale_factor * 1052), int(scale_factor * 1914))
-
-dataset = VisDaDataset(im_size=img_size)
+dataset = VisDaDataset(im_size=args.img_size)
 dataloader = data.DataLoader(dataset, batch_size=1, shuffle=True)
 
-model = GCN(dataset.num_classes, dataset.img_size, k=K).cuda()
+model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
 model.load_state_dict(torch.load(save_path))
 model.eval()
 
@@ -46,17 +52,6 @@ def main():
 
 	iou /= samples
 	print("Mean IOU: {}".format(iou))
-
-
-def print_scores(i, score, class_iou):
-	print("### Image {} ###".format(i))
-	for key, val in score.items():
-		print("{}{}".format(key, val))
-	for key, val in class_iou.items():
-		if not np.isnan(val):
-			print("{}:\t{}".format(key, val))
-	print()
-
 
 if __name__ == "__main__":
 	main()
