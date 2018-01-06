@@ -14,5 +14,4 @@ Todo:
 - try loss functions
 - try optimizers
 - test hyperparameters
-- validation every epoch
 - iou vs crossentropy loss
