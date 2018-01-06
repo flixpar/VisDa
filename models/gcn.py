@@ -50,7 +50,7 @@ class GCN(nn.Module):
 		self.input_size = input_size
 
 		# https://download.pytorch.org/models/resnet152-b121ed2d.pth
-		res152_path = os.path.join('/home/flixpar/data', 'ResNet', 'resnet152.pth')
+		res152_path = os.path.join('/media/data', 'pretrained', 'resnet152.pth')
 
 		resnet = models.resnet152()
 		resnet.load_state_dict(torch.load(res152_path))

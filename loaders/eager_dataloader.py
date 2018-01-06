@@ -35,7 +35,7 @@ class EagerVisDaDataset(data.Dataset):
 	class_weights = torch.FloatTensor([0.471072493982, 0.0, 0.0, 0.0, 0.00181448729946, 0.0, 0.00267729106253, 0.324546718887,
 			0.0, 0.0, 0.0, 0.167350940922, 0.0, 0.0, 0.000255553958685, 0.0, 0.0, 0.0, 0.0106366173936,
 			0.0, 0.0, 0.0, 0.0216458964943, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
-
+	
 	def __init__(self, im_size=shape, mode="train"):
 		if mode == "train":
 			self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
@@ -49,8 +49,8 @@ class EagerVisDaDataset(data.Dataset):
 		self.shape = im_size
 
 		pool = mp.Pool(PROCESSORS)
-		self.data = pool.starmap(load_img, zip(image_fnlist, label_fnlist))
-
+		self.data = pool.starmap(self.load_img, zip(self.image_fnlist, self.label_fnlist))
+	
 	def load_img(self, img_fn, lbl_fn):
 
 		img = cv2.imread(img_fn)

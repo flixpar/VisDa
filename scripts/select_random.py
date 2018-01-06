@@ -10,6 +10,7 @@ img_fnlist = glob(os.path.join(base_path, "images", "*.png"))
 img_fnlist = random.sample(img_fnlist, num_samples)
 
 for img_fn in img_fnlist:
+	print(img_fn)
 	img_dest = img_fn.replace("images", "eval/images")
 	os.rename(img_fn, img_dest)
 	lbl_fn = img_fn.replace("images", "annotations")
