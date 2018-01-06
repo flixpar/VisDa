@@ -5,15 +5,17 @@ import torch
 import cv2
 from torch.utils import data
 
+import multiprocessing as mp
+PROCESSORS = 8
+
 root_dir = "/media/data/train"
 
 
-class VisDaDataset(data.Dataset):
+class EagerVisDaDataset(data.Dataset):
 
 	num_classes = 35
 	ignore_labels = [0, 1, 2, 3]
 
-	# shape = (526, 957)
 	shape = (1052, 1914)
 
 	img_mean = np.array([108.56263368194266, 111.92560322135374, 113.01417537462997])
@@ -34,18 +36,22 @@ class VisDaDataset(data.Dataset):
 			0.0, 0.0, 0.0, 0.167350940922, 0.0, 0.0, 0.000255553958685, 0.0, 0.0, 0.0, 0.0106366173936,
 			0.0, 0.0, 0.0, 0.0216458964943, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0])
 
-	def __init__(self, im_size=shape):
-		self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
-		self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
+	def __init__(self, im_size=shape, mode="train"):
+		if mode == "train":
+			self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
+			self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
+		else:
+			self.image_fnlist = glob.glob(os.path.join(root_dir, "eval", "images", "*.png"))
+			self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
 
 		self.size = len(self.image_fnlist)
-		#self.img_size = cv2.imread(self.image_fnlist[0]).shape[0:2]
-		self.img_size = im_size # self.shape
+		self.img_size = im_size
 		self.shape = im_size
 
-	def __getitem__(self, index):
-		img_fn = self.image_fnlist[index]
-		lbl_fn = self.label_fnlist[index]
+		pool = mp.Pool(PROCESSORS)
+		self.data = pool.starmap(load_img, zip(image_fnlist, label_fnlist))
+
+	def load_img(self, img_fn, lbl_fn):
 
 		img = cv2.imread(img_fn)
 		lbl = cv2.imread(lbl_fn)
@@ -60,7 +66,6 @@ class VisDaDataset(data.Dataset):
 
 		lbl = self.transform_labels(lbl)
 
-		# normalize the image:
 		img = img - self.img_mean
 		img /= self.img_stdev
 
@@ -68,6 +73,9 @@ class VisDaDataset(data.Dataset):
 		lbl = torch.from_numpy(lbl).type(torch.LongTensor)
 
 		return (img, lbl)
+
+	def __getitem__(self, index):
+		return self.data[index]
 
 	def __len__(self):
 		return self.size
