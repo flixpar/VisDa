@@ -8,6 +8,7 @@ import numpy as np
 import yaml
 import os
 import cv2
+np.seterr(divide='ignore', invalid='ignore')
 
 from models.gcn import GCN
 from loaders.dataloader import VisDaDataset
@@ -94,7 +95,7 @@ def pred_crf(img):
 		compat=10, kernel=dcrf.DIAG_KERNEL, normalization=dcrf.NORMALIZE_SYMMETRIC)
 	
 	Q = d.inference(5)
-	if not Q.any(): print("CRF Error.")
+	if not np.array(Q).any(): print("CRF Error.")
 	res = np.argmax(Q, axis=0).reshape((image.shape[1], image.shape[2]))
 	return res
 
