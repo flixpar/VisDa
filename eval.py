@@ -86,14 +86,21 @@ def pred_crf(img):
 	# This creates the color-dependent features --
 	# because the segmentation that we get from CNN are too coarse
 	# and we can use local color features to refine them
-	d.addPairwiseBilateral(sxy=(80,80), srgb=(13,13,13), rgbim=image, compat=10,
-		kernel=dcrf.DIAG_KERNEL, normalization=dcrf.NORMALIZE_SYMMETRIC)
+	d.addPairwiseBilateral(sxy=(80,80), srgb=(13,13,13), rgbim=reverse_img_norm(image),
+		compat=10, kernel=dcrf.DIAG_KERNEL, normalization=dcrf.NORMALIZE_SYMMETRIC)
 	
 	Q = d.inference(5)
 	res = np.argmax(Q, axis=0).reshape((image.shape[1], image.shape[2]))
 
 	return res
 
+def reverse_img_norm(image):
+	img_mean = np.array([108.56263368194266, 111.92560322135374, 113.01417537462997])
+	img_stdev = 60
+	image *= img_stdev
+	image += img_mean
+	image = image.astype(np.uint8)
+	return image
 
 if __name__ == "__main__":
 	main()
