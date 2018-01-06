@@ -19,4 +19,7 @@ eval_freq: 2000,
 
 base_path: "/home/flixpar/VisDa",
 base_data_path: "/media/data/train/",
+
+resume: True,
+resume_epoch: 1,
 }

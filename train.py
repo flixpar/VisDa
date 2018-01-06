@@ -37,15 +37,26 @@ evalloader = data.DataLoader(EagerVisDaDataset(im_size=args.img_size, mode="eval
 model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
 model.train()
 
+if args.resume:
+	resume_path = save_path.format(args.resume_epoch)
+	model.load_state_dict(torch.load(resume_path))
+	start_epoch = args.resume_epoch
+else:
+	start_epoch = 0
+
 # setup loss and optimizer
 optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
 criterion = CrossEntropyLoss2d(weight=dataset.class_weights).cuda()
+
+if args.resume:
+	optimizer = poly_lr_scheduler(optimizer, args.lr, args.resume_epoch,
+			lr_decay_iter=args.lr_decay_freq, max_iter=args.max_epochs, power=args.lr_power)
 
 def main():
 
 	print("Starting training...")
 	global optimizer
-	for epoch in range(args.max_epochs):
+	for epoch in range(start_epoch, args.max_epochs):
 
 		for i, (image, label) in tqdm(enumerate(dataloader), total=int(len(dataset)/args.batch_size)):
 			img = autograd.Variable(image.cuda())
