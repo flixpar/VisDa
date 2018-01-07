@@ -48,13 +48,13 @@ def main():
 			break
 
 		pred = predict(image)
-		pred_crf = pred_crf(image)
+		predcrf = pred_crf(image)
 		gt = np.squeeze(truth.cpu().numpy())
 
-		save_img(pred_crf, name="predcrf", i, is_lbl=True)
-		save_img(pred, name="pred", i, is_lbl=True)
-		save_img(gt, name="gt", i, is_lbl=True)
-		save_img(reverse_img_norm(image.data.cpu().numpy()), name="src", i, is_lbl=False)
+		save_img(predcrf, "predcrf", i, is_lbl=True)
+		save_img(pred, "pred", i, is_lbl=True)
+		save_img(gt, "gt", i, is_lbl=True)
+		save_img(reverse_img_norm(np.squeeze(image.cpu().numpy())), "src", i, is_lbl=False)
 
 		iou += miou(gt, pred, dataset.num_classes)
 		print_scores(gt, pred, dataset.num_classes, i+1)
