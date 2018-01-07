@@ -17,7 +17,7 @@ from util.util import Namespace
 
 import torch.nn.functional as F
 import pydensecrf.densecrf as dcrf
-from pydensecrf.utils import compute_unary, create_pairwise_bilateral, create_pairwise_gaussian, unary_from_softmax
+from pydensecrf.utils import create_pairwise_bilateral, create_pairwise_gaussian
 
 
 # config:
@@ -47,12 +47,14 @@ def main():
 		if i == samples:
 			break
 
-		# pred = predict(image)
-		pred = pred_crf(image)
+		pred = predict(image)
+		pred_crf = pred_crf(image)
 		gt = np.squeeze(truth.cpu().numpy())
 
-		save_anno(pred, i, gt=False)
-		save_anno(gt, i, gt=True)
+		save_img(pred_crf, name="predcrf", i, is_lbl=True)
+		save_img(pred, name="pred", i, is_lbl=True)
+		save_img(gt, name="gt", i, is_lbl=True)
+		save_img(reverse_img_norm(image.data.cpu().numpy()), name="src", i, is_lbl=False)
 
 		iou += miou(gt, pred, dataset.num_classes)
 		print_scores(gt, pred, dataset.num_classes, i+1)
@@ -119,22 +121,24 @@ def reverse_img_norm(image):
 	return image
 
 def recolor(lbl):
-	labels = [(0, 0, 0), (0, 0, 0), (0, 0, 0), (0, 0, 0), (20, 20, 20), (0, 74, 111), (81, 0, 81), (128, 64, 128),
-			(232, 35, 244), (160, 170, 250), (140, 150, 230), (70, 70, 70), (156, 102, 102), (153, 153, 190),
-			(180, 165, 180), (100, 100, 150), (90, 120, 150), (153, 153, 153), (153, 153, 153), (30, 170, 250),
-			(0, 220, 220), (35, 142, 107), (152, 251, 152), (180, 130, 70), (60, 20, 220), (0, 0, 255), (142, 0, 0),
-			(70, 0, 0), (100, 60, 0), (90, 0, 0), (110, 0, 0), (100, 80, 0), (230, 0, 0), (32, 11, 119), (142, 0, 0)]
+	labels = [
+			(0, 0, 0), (20, 20, 20), (0, 74, 111), (81, 0, 81), (128, 64, 128),
+			(232, 35, 244), (70, 70, 70), (156, 102, 102), (153, 153, 190),
+			(180, 165, 180), (100, 100, 150), (90, 120, 150), (153, 153, 153), (30, 170, 250),
+			(0, 220, 220), (35, 142, 107), (152, 251, 152), (180, 130, 70), (60, 20, 220), (0, 0, 255),
+			(70, 0, 0), (100, 60, 0), (110, 0, 0), (100, 80, 0), (230, 0, 0), (32, 11, 119), (142, 0, 0)
+	]
 
 	out = np.zeros((lbl.shape[0], lbl.shape[1], 3))
 	for i in range(len(labels)):
 		out[lbl==i] = labels[i]
 	return out
 
-def save_anno(lbl, num, gt=True):
-	fn = "gt{}.png".format(num) if gt else "pred{}.png".format(num)
+def save_img(img, name, num, is_lbl=False):
+	fn = "{}_{}.png".format(name, num)
 	path = os.path.join(out_path, fn)
-	col = recolor(lbl)
-	cv2.imwrite(path, col)
+	if is_lbl: img = recolor(img)
+	cv2.imwrite(path, img)
 
 if __name__ == "__main__":
 	main()
