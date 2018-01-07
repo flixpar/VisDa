@@ -21,6 +21,7 @@ np.seterr(divide='ignore', invalid='ignore')
 # config:
 config_path = "/home/flixpar/VisDa/config.yaml"
 args = Namespace(**yaml.load(open(config_path, 'r')))
+args.img_size = (int(args.scale_factor*args.default_img_size[0]), int(args.scale_factor * args.default_img_size[1]))
 args.print()
 print()
 

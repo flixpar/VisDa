@@ -10,7 +10,7 @@ class Namespace:
 	def __init__(self, **kwargs):
 		self.__dict__.update(kwargs)
 	def print(self):
-		for key, val in self.__dict__.items():
+		for key, val in sorted(self.__dict__.items()):
 			print("{}:\t{}".format(key, val))
 
 def poly_lr_scheduler(optimizer, init_lr, it, lr_decay_iter=1, max_iter=100, power=0.9):
