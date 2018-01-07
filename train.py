@@ -49,8 +49,8 @@ optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, we
 criterion = CrossEntropyLoss2d(weight=dataset.class_weights).cuda()
 
 if args.resume:
-	optimizer = poly_lr_scheduler(optimizer, args.lr, args.resume_epoch,
-			lr_decay_iter=args.lr_decay_freq, max_iter=args.max_epochs, power=args.lr_power)
+	poly_lr_scheduler(optimizer, args.lr, args.resume_epoch, lr_decay_iter=args.lr_decay_freq,
+		max_iter=args.max_epochs, power=args.lr_power)
 
 def main():
 
@@ -86,8 +86,8 @@ def main():
 		tqdm.write("Eval mIOU: {}".format(iou))
 		logfile.write("Eval mIOU: {}\n".format(iou))
 
-		optimizer = poly_lr_scheduler(optimizer, args.lr, epoch,
-			lr_decay_iter=args.lr_decay_freq, max_iter=args.max_epochs, power=args.lr_power)
+		poly_lr_scheduler(optimizer, args.lr, epoch, lr_decay_iter=args.lr_decay_freq,
+			max_iter=args.max_epochs, power=args.lr_power)
 
 	torch.save(model.state_dict(), save_path.format("final"))
 
