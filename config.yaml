@@ -17,7 +17,7 @@ img_size: !!python/tuple [841, 1531],
 lr_decay_freq: 1,
 lr_power: 0.9,
 
-eval_freq: 2000,
+eval_freq: 1000,
 
 base_path: "/home/flixpar/VisDa",
 base_data_path: "/media/data/train/",
