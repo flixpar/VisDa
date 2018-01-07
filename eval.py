@@ -47,8 +47,8 @@ def main():
 		if i == samples:
 			break
 
-		pred = predict(image)
-		# pred = pred_crf(image)
+		# pred = predict(image)
+		pred = pred_crf(image)
 		gt = np.squeeze(truth.cpu().numpy())
 
 		save_anno(pred, i, gt=False)
@@ -72,32 +72,41 @@ def predict(img):
 
 def pred_crf(img):
 
+	# initial prediction
 	img = Variable(img.cuda())
 	output = model(img)
 	pred = F.log_softmax(output, dim=1)
 
-	image = np.squeeze(img.data.cpu().numpy())
+	# reformat outputs
+	img = np.squeeze(img.data.cpu().numpy())
+	img = reverse_img_norm(img)
 	pred = np.squeeze(pred.data.cpu().numpy())
 
-	d = dcrf.DenseCRF2D(image.shape[1], image.shape[2], 35)
+	# init vars
+	num_cls = pred.shape[0]
+	scale = 0.6
+	clip = 1e-9
 
-	unary = unary_from_softmax(np.ascontiguousarray(pred))
-	unary = np.ascontiguousarray(unary)
-	d.setUnaryEnergy(unary)
+	# init crf
+	d = dcrf.DenseCRF2D(img.shape[0], img.shape[1], n_labels)
 
-	# This potential penalizes small pieces of segmentation that are
-	# spatially isolated -- enforces more spatially consistent segmentations
+	# create unary
+	uniform = np.ones(pred.shape) / num_cls
+	U = scale * pred + (1 - scale) * uniform
+	U = np.clip(U, clip, 1.0)
+	U = -np.log(U).reshape([num_cls, -1]).astype(np.float32)
+
+	d.setUnaryEnergy(U)
+
+	# create pairwise
 	d.addPairwiseGaussian(sxy=(3,3), compat=3, kernel=dcrf.DIAG_KERNEL, normalization=dcrf.NORMALIZE_SYMMETRIC)
+	d.addPairwiseBilateral(sxy=(80,80), srgb=(13,13,13), rgbim=img, compat=10, kernel=dcrf.DIAG_KERNEL,
+		normalization=dcrf.NORMALIZE_SYMMETRIC)
 
-	# This creates the color-dependent features --
-	# because the segmentation that we get from CNN are too coarse
-	# and we can use local color features to refine them
-	d.addPairwiseBilateral(sxy=(80,80), srgb=(13,13,13), rgbim=reverse_img_norm(image),
-		compat=10, kernel=dcrf.DIAG_KERNEL, normalization=dcrf.NORMALIZE_SYMMETRIC)
-	
+	# inference
 	Q = d.inference(5)
-	if not np.array(Q).any(): print("CRF Error.")
-	res = np.argmax(Q, axis=0).reshape((image.shape[1], image.shape[2]))
+	res = np.argmax(Q, axis=0).reshape((img.shape[0], img.shape[1]))
+
 	return res
 
 def reverse_img_norm(image):
@@ -107,7 +116,6 @@ def reverse_img_norm(image):
 	image *= img_stdev
 	image += img_mean
 	image = image.astype(np.uint8)
-	image = np.ascontiguousarray(image)
 	return image
 
 def recolor(lbl):
