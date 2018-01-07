@@ -42,9 +42,9 @@ def class_iou(label_trues, label_preds, n_class):
 	cls_iu = dict(zip(range(n_class), iu))
 	return cls_iu
 
-def print_scores(pred, gt, i=0):
+def print_scores(pred, gt, n_classes, i=0):
 	if i: print("### Image {} ###".format(i))
-	score, class_iou = scores(gt, pred, dataset.num_classes)
+	score, class_iou = scores(gt, pred, n_classes)
 	for key, val in score.items():
 		print("{}:\t{}".format(key, val))
 	for key, val in class_iou.items():

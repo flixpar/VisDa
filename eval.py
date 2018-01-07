@@ -25,7 +25,7 @@ config_path = "/home/flixpar/VisDa/config.yaml"
 args = Namespace(**yaml.load(open(config_path, 'r')))
 
 samples = 5
-epoch = 1
+epoch = 5
 
 save_path = "/home/flixpar/VisDa/saves/gcn-{}.pth".format(epoch)
 out_path = "/home/flixpar/VisDa/pred/"
@@ -55,10 +55,11 @@ def main():
 		save_anno(gt, i, gt=True)
 
 		iou += miou(gt, pred, dataset.num_classes)
-		# score, class_iou = scores(gt, pred, dataset.num_classes)
-		# print_scores(i+1, score, class_iou)
+		print_scores(gt, pred, dataset.num_classes, i+1)
 
 	iou /= samples
+	print()
+	print()
 	print("Mean IOU: {}".format(iou))
 
 def predict(img):
