@@ -23,6 +23,7 @@ from pydensecrf.utils import create_pairwise_bilateral, create_pairwise_gaussian
 # config:
 config_path = "/home/flixpar/VisDa/config.yaml"
 args = Namespace(**yaml.load(open(config_path, 'r')))
+args.img_size = (int(args.scale_factor*args.default_img_size[0]), int(args.scale_factor * args.default_img_size[1]))
 
 samples = 5
 epoch = 5
@@ -33,7 +34,10 @@ out_path = "/home/flixpar/VisDa/pred/"
 dataset = VisDaDataset(im_size=args.img_size)
 dataloader = data.DataLoader(dataset, batch_size=1, shuffle=True)
 
-model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
+if args.model=="GCN": model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
+elif args.model=="UNet": model = UNet(dataset.num_classes).cuda()
+else: raise ValueError("Invalid model arg.")
+
 model.load_state_dict(torch.load(save_path))
 model.eval()
 
