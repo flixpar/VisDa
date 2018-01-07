@@ -88,7 +88,7 @@ def pred_crf(img):
 	clip = 1e-9
 
 	# init crf
-	d = dcrf.DenseCRF2D(img.shape[0], img.shape[1], n_labels)
+	d = dcrf.DenseCRF2D(img.shape[1], img.shape[0], num_cls)
 
 	# create unary
 	uniform = np.ones(pred.shape) / num_cls
@@ -100,7 +100,7 @@ def pred_crf(img):
 
 	# create pairwise
 	d.addPairwiseGaussian(sxy=(3,3), compat=3, kernel=dcrf.DIAG_KERNEL, normalization=dcrf.NORMALIZE_SYMMETRIC)
-	d.addPairwiseBilateral(sxy=(80,80), srgb=(13,13,13), rgbim=img, compat=10, kernel=dcrf.DIAG_KERNEL,
+	d.addPairwiseBilateral(sxy=(80,80), srgb=(13,13,13), rgbim=np.ascontiguousarray(img), compat=10, kernel=dcrf.DIAG_KERNEL,
 		normalization=dcrf.NORMALIZE_SYMMETRIC)
 
 	# inference
@@ -112,7 +112,7 @@ def pred_crf(img):
 def reverse_img_norm(image):
 	img_mean = np.array([108.56263368194266, 111.92560322135374, 113.01417537462997])
 	img_stdev = 60
-	image = image.transpose(2, 1, 0)
+	image = image.transpose(1, 2, 0)
 	image *= img_stdev
 	image += img_mean
 	image = image.astype(np.uint8)
