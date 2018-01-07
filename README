@@ -4,9 +4,9 @@ Felix Parker
 
 Implemented Architectures:
 - GCN
+- UNet
 
 Planned Architectures:
-- UNet
 - PSPNet
 
 Todo:

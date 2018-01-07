@@ -6,6 +6,7 @@ from torch.utils import data
 torch.backends.cudnn.benchmark = True
 
 from models.gcn import GCN
+from models.unet import UNet
 from loaders.dataloader import VisDaDataset
 from loaders.eager_dataloader import EagerVisDaDataset
 from util.loss import CrossEntropyLoss2d
@@ -35,7 +36,9 @@ dataloader = data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True, 
 evalloader = data.DataLoader(EagerVisDaDataset(im_size=args.img_size, mode="eval"), batch_size=1, shuffle=True)
 
 # setup model:
-model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
+if args.model=="GCN": model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
+elif args.model=="UNet": model = UNet(dataset.num_classes).cuda()
+else: raise ValueError("Invalid model arg.")
 model.train()
 
 if args.resume:
