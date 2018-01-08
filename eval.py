@@ -11,6 +11,7 @@ import cv2
 np.seterr(divide='ignore', invalid='ignore')
 
 from models.gcn import GCN
+from models.unet import UNet
 from loaders.dataloader import VisDaDataset
 from util.metrics import scores, miou, class_iou, print_scores
 from util.util import *
@@ -26,12 +27,12 @@ args = Namespace(**yaml.load(open(config_path, 'r')))
 args.img_size = (int(args.scale_factor*args.default_img_size[0]), int(args.scale_factor * args.default_img_size[1]))
 
 samples = 5
-epoch = 5
+epoch = 10
 
 save_path = "/home/flixpar/VisDa/saves/gcn-{}.pth".format(epoch)
 out_path = "/home/flixpar/VisDa/pred/"
 
-dataset = VisDaDataset(im_size=args.img_size)
+dataset = VisDaDataset(im_size=args.img_size, mode="eval")
 dataloader = data.DataLoader(dataset, batch_size=1, shuffle=True)
 
 if args.model=="GCN": model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
@@ -55,13 +56,13 @@ def main():
 		predcrf = pred_crf(image)
 		gt = np.squeeze(truth.cpu().numpy())
 
-		save_img(predcrf, "predcrf", i, is_lbl=True)
-		save_img(pred, "pred", i, is_lbl=True)
-		save_img(gt, "gt", i, is_lbl=True)
-		save_img(reverse_img_norm(np.squeeze(image.cpu().numpy())), "src", i, is_lbl=False)
+		save_img(predcrf, "predcrf", i, out_path, is_lbl=True)
+		save_img(pred, "pred", i, out_path, is_lbl=True)
+		save_img(gt, "gt", i, out_path, is_lbl=True)
+		save_img(reverse_img_norm(np.squeeze(image.cpu().numpy())), "src", i, out_path, is_lbl=False)
 
-		iou += miou(gt, pred, dataset.num_classes)
-		print_scores(gt, pred, dataset.num_classes, i+1)
+		iou += miou(gt, predcrf, dataset.num_classes)
+		print_scores(gt, predcrf, dataset.num_classes, i+1)
 
 	iou /= samples
 	print()

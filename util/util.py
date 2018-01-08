@@ -43,7 +43,7 @@ def recolor(lbl):
 		out[lbl==i] = labels[i]
 	return out
 
-def save_img(img, name, num, is_lbl=False):
+def save_img(img, name, num, out_path, is_lbl=False):
 	fn = "{}_{}.png".format(name, num)
 	path = os.path.join(out_path, fn)
 	if is_lbl: img = recolor(img)
