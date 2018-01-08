@@ -27,26 +27,27 @@ args = Namespace(**yaml.load(open(config_path, 'r')))
 args.img_size = (int(args.scale_factor*args.default_img_size[0]), int(args.scale_factor * args.default_img_size[1]))
 
 samples = 30
-epoch = 8
+epoch = 10
 
-save_path = "/home/flixpar/VisDa/saves/gcn-{}.pth".format(epoch)
+gcn_save_path = "/home/flixpar/VisDa/saves_gcn/gcn-{}.pth".format(epoch)
+unet_save_path = "/home/flixpar/VisDa/saves_unet/unet-{}.pth".format(epoch)
 out_path = "/home/flixpar/VisDa/pred/"
 
 dataset = VisDaDataset(im_size=args.img_size, mode="eval")
-dataloader = data.DataLoader(dataset, batch_size=1, shuffle=False) # , shuffle=True)
+dataloader = data.DataLoader(dataset, batch_size=1, shuffle=True)
 
-if args.model=="GCN": model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
-elif args.model=="UNet": model = UNet(dataset.num_classes).cuda()
-else: raise ValueError("Invalid model arg.")
+gcn_model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
+unet_model = UNet(dataset.num_classes).cuda()
 
-model.load_state_dict(torch.load(save_path))
-model.eval()
+gcn_model.load_state_dict(torch.load(gcn_save_path))
+gcn_model.eval()
+
+unet_model.load_state_dict(torch.load(unet_save_path))
+unet_model.eval()
 
 def main():
 
 	iou = 0
-	ioucrf = 0
-	cls_iou = np.zeros(dataset.num_classes)
 
 	print("Starting predictions...")
 	for i, (image, truth) in enumerate(dataloader):
@@ -55,47 +56,29 @@ def main():
 			break
 
 		pred = predict(image)
-		predcrf = pred_crf(image)
 		gt = np.squeeze(truth.cpu().numpy())
 
-		# save_img(predcrf, "predcrf", i, out_path, is_lbl=True)
-		# save_img(pred, "pred", i, out_path, is_lbl=True)
-		# save_img(gt, "gt", i, out_path, is_lbl=True)
-		# save_img(reverse_img_norm(np.squeeze(image.cpu().numpy())), "src", i, out_path, is_lbl=False)
-
 		iou += miou(gt, pred, dataset.num_classes)
-		ioucrf += miou(gt, predcrf, dataset.num_classes)
-
-		cls_iou = cls_iou + class_iou(gt, predcrf, dataset.num_classes)
-
-		# print(miou(gt, pred, dataset.num_classes))
-		# print(miou(gt, predcrf, dataset.num_classes))
-		# print()
-		# print_scores(gt, predcrf, dataset.num_classes, i+1)
+		cls_iou = cls_iou + class_iou(gt, pred, dataset.num_classes)
 
 	iou /= samples
-	ioucrf /= samples
 	cls_iou /= samples
 	print()
-	print()
-	print("Mean IOU w/o CRF: {}".format(iou))
-	print("Mean IOU w/ CRF: {}".format(ioucrf))
-	print("Class IOU w/ CRF: {}".format(cls_iou))
+	print("Mean IOU w/ CRF & Ensemble: {}".format(ioucrf))
+	print("Class IOU w/ CRF & Ensemble: {}".format(cls_iou))
 
 def predict(img):
 
+	# GCN prediction
 	img = Variable(img.cuda())
-	output = model(img)
-	pred = np.squeeze(output.data.max(1)[1].cpu().numpy())
+	output_gcn = gcn_model(img)
+	output_unet = F.softmax(output, dim=1)
 
-	return pred
+	# GCN prediction
+	output_unet = unet_model(img)
+	output_unet = F.softmax(output, dim=1)
 
-def pred_crf(img):
-
-	# initial prediction
-	img = Variable(img.cuda())
-	output = model(img)
-	pred = F.softmax(output, dim=1)
+	pred = (output_gcn + output_unet) / 2
 
 	# reformat outputs
 	img = np.squeeze(img.data.cpu().numpy())
@@ -105,14 +88,14 @@ def pred_crf(img):
 	# init vars
 	num_cls = pred.shape[0]
 	scale = 0.97
-	clip = 1e-8
+	clip = 1e-9
 
 	# init crf
 	d = dcrf.DenseCRF2D(img.shape[1], img.shape[0], num_cls)
 
 	# create unary
 	uniform = np.ones(pred.shape) / num_cls
-	U = (scale * pred) + ((1 - scale) * uniform)
+	U = scale * pred + (1 - scale) * uniform
 	U = np.clip(U, clip, 1.0)
 	U = -np.log(U).reshape([num_cls, -1]).astype(np.float32)
 
@@ -124,7 +107,7 @@ def pred_crf(img):
 		normalization=dcrf.NORMALIZE_SYMMETRIC)
 
 	# inference
-	Q = d.inference(5)
+	Q = d.inference(4)
 	res = np.argmax(Q, axis=0).reshape((img.shape[0], img.shape[1]))
 
 	return res
