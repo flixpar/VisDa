@@ -39,7 +39,8 @@ def class_iou(label_trues, label_preds, n_class):
 	for lt, lp in zip(label_trues, label_preds):
 		hist += _fast_hist(lt.flatten(), lp.flatten(), n_class)
 	iu = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist))
-	cls_iu = dict(zip(range(n_class), iu))
+	cls_iu = iu
+	# cls_iu = dict(zip(range(n_class), iu))
 	return cls_iu
 
 def print_scores(pred, gt, n_classes, i=0):

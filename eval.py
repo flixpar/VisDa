@@ -26,14 +26,14 @@ config_path = "/home/flixpar/VisDa/config.yaml"
 args = Namespace(**yaml.load(open(config_path, 'r')))
 args.img_size = (int(args.scale_factor*args.default_img_size[0]), int(args.scale_factor * args.default_img_size[1]))
 
-samples = 5
-epoch = 10
+samples = 30
+epoch = 8
 
 save_path = "/home/flixpar/VisDa/saves/gcn-{}.pth".format(epoch)
 out_path = "/home/flixpar/VisDa/pred/"
 
 dataset = VisDaDataset(im_size=args.img_size, mode="eval")
-dataloader = data.DataLoader(dataset, batch_size=1, shuffle=True)
+dataloader = data.DataLoader(dataset, batch_size=1, shuffle=False) # , shuffle=True)
 
 if args.model=="GCN": model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
 elif args.model=="UNet": model = UNet(dataset.num_classes).cuda()
@@ -45,6 +45,8 @@ model.eval()
 def main():
 
 	iou = 0
+	ioucrf = 0
+	cls_iou = np.zeros(dataset.num_classes)
 
 	print("Starting predictions...")
 	for i, (image, truth) in enumerate(dataloader):
@@ -56,18 +58,29 @@ def main():
 		predcrf = pred_crf(image)
 		gt = np.squeeze(truth.cpu().numpy())
 
-		save_img(predcrf, "predcrf", i, out_path, is_lbl=True)
-		save_img(pred, "pred", i, out_path, is_lbl=True)
-		save_img(gt, "gt", i, out_path, is_lbl=True)
-		save_img(reverse_img_norm(np.squeeze(image.cpu().numpy())), "src", i, out_path, is_lbl=False)
+		# save_img(predcrf, "predcrf", i, out_path, is_lbl=True)
+		# save_img(pred, "pred", i, out_path, is_lbl=True)
+		# save_img(gt, "gt", i, out_path, is_lbl=True)
+		# save_img(reverse_img_norm(np.squeeze(image.cpu().numpy())), "src", i, out_path, is_lbl=False)
 
-		iou += miou(gt, predcrf, dataset.num_classes)
-		print_scores(gt, predcrf, dataset.num_classes, i+1)
+		iou += miou(gt, pred, dataset.num_classes)
+		ioucrf += miou(gt, predcrf, dataset.num_classes)
+
+		cls_iou = cls_iou + class_iou(gt, predcrf, dataset.num_classes)	
+
+		# print(miou(gt, pred, dataset.num_classes))
+		# print(miou(gt, predcrf, dataset.num_classes))
+		# print()
+		# print_scores(gt, predcrf, dataset.num_classes, i+1)
 
 	iou /= samples
+	ioucrf /= samples
+	cls_iou /= samples
 	print()
 	print()
-	print("Mean IOU: {}".format(iou))
+	print("Mean IOU w/o CRF: {}".format(iou))
+	print("Mean IOU w/ CRF: {}".format(ioucrf))
+	print("Class IOU w/ CRF: {}".format(cls_iou))
 
 def predict(img):
 
@@ -82,7 +95,7 @@ def pred_crf(img):
 	# initial prediction
 	img = Variable(img.cuda())
 	output = model(img)
-	pred = F.log_softmax(output, dim=1)
+	pred = F.softmax(output, dim=1)
 
 	# reformat outputs
 	img = np.squeeze(img.data.cpu().numpy())
@@ -91,15 +104,15 @@ def pred_crf(img):
 
 	# init vars
 	num_cls = pred.shape[0]
-	scale = 0.85
-	clip = 1e-9
+	scale = 0.97
+	clip = 1e-8
 
 	# init crf
 	d = dcrf.DenseCRF2D(img.shape[1], img.shape[0], num_cls)
 
 	# create unary
 	uniform = np.ones(pred.shape) / num_cls
-	U = scale * pred + (1 - scale) * uniform
+	U = (scale * pred) + ((1 - scale) * uniform)
 	U = np.clip(U, clip, 1.0)
 	U = -np.log(U).reshape([num_cls, -1]).astype(np.float32)
 
@@ -107,7 +120,7 @@ def pred_crf(img):
 
 	# create pairwise
 	d.addPairwiseGaussian(sxy=(3,3), compat=3, kernel=dcrf.DIAG_KERNEL, normalization=dcrf.NORMALIZE_SYMMETRIC)
-	d.addPairwiseBilateral(sxy=(80,80), srgb=(13,13,13), rgbim=np.ascontiguousarray(img), compat=10, kernel=dcrf.DIAG_KERNEL,
+	d.addPairwiseBilateral(sxy=(40,40), srgb=(15,15,15), rgbim=np.ascontiguousarray(img), compat=10, kernel=dcrf.DIAG_KERNEL,
 		normalization=dcrf.NORMALIZE_SYMMETRIC)
 
 	# inference

@@ -44,7 +44,7 @@ def recolor(lbl):
 	return out
 
 def save_img(img, name, num, out_path, is_lbl=False):
-	fn = "{}_{}.png".format(name, num)
+	fn = "{}_{}.png".format(num, name)
 	path = os.path.join(out_path, fn)
 	if is_lbl: img = recolor(img)
 	cv2.imwrite(path, img)
