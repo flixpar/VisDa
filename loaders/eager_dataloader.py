@@ -64,13 +64,9 @@ class EagerVisDaDataset(data.Dataset):
 		img = cv2.imread(img_fn)
 		lbl = cv2.imread(lbl_fn)
 
-		if (img.shape[0] != lbl.shape[0] or img.shape[1] != lbl.shape[1]):
-			return self.__getitem__(index+1)
-
-		if (lbl.shape != self.shape):
-			size = (self.shape[1], self.shape[0])
-			img = cv2.resize(img, size, cv2.INTER_LINEAR)
-			lbl = cv2.resize(lbl, size, cv2.INTER_NEAREST)
+		size = (self.shape[1], self.shape[0])
+		img = cv2.resize(img, size, cv2.INTER_AREA)
+		lbl = cv2.resize(lbl, size, cv2.INTER_NEAREST)
 
 		lbl = self.transform_labels(lbl)
 
