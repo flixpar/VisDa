@@ -1,26 +1,23 @@
 {
-model: "UNet",
+    model: "UNet",
 
-max_epochs: 20,
-batch_size: 6,
+    max_epochs: 20,
+    batch_size: 6,
 
-lr: !!float 2e-5,
-weight_decay: 0.0005,
-momentum: 0.98,
+    lr: !!float 2e-5,
+    weight_decay: 0.0005,
+    momentum: 0.98,
 
-K: 13,
+    K: 13,
 
-scale_factor: 0.5,
-default_img_size: !!python/tuple [1052, 1914],
+    scale_factor: 0.5,
+    default_img_size: !!python/tuple [1052, 1914],
 
-lr_decay_freq: 1,
-lr_power: 0.9,
+    lr_decay_freq: 1,
+    lr_power: 0.9,
 
-eval_freq: 1000,
+    eval_freq: 1000,
 
-base_path: "/home/flixpar/VisDa",
-base_data_path: "/media/data/train/",
-
-resume: False,
-resume_epoch: 1,
+    resume: False,
+    resume_epoch: 1,
 }

@@ -5,35 +5,41 @@ from torch import autograd
 from torch.utils import data
 torch.backends.cudnn.benchmark = True
 
-from models.gcn import GCN
-from models.unet import UNet
-from loaders.dataloader import VisDaDataset
-from loaders.eager_dataloader import EagerVisDaDataset
-from util.loss import CrossEntropyLoss2d
-from util.util import Namespace, poly_lr_scheduler
-from util.metrics import miou
-
 import os
 from tqdm import tqdm
 import yaml
+
 import numpy as np
 np.seterr(divide='ignore', invalid='ignore')
 
+from models.gcn import GCN
+from models.unet import UNet
+
+from loaders.visda import VisDaDataset
+
+from util.loss import CrossEntropyLoss2d
+from util.util import Namespace, poly_lr_scheduler
+
 # config:
-config_path = "/home/flixpar/VisDa/config.yaml"
-args = Namespace(**yaml.load(open(config_path, 'r')))
-args.img_size = (int(args.scale_factor*args.default_img_size[0]), int(args.scale_factor * args.default_img_size[1]))
+args = Namespace(**yaml.load(open(os.path.join(os.getcwd(), "config.yaml"), 'r')))
+args.img_size = (int(args.scale_factor*args.default_img_size[0]), int(args.scale_factor*args.default_img_size[1]))
+
+paths = yaml.load(open(os.path.join(os.getcwd(), "paths.yaml"), 'r'))
+
 args.print()
 print()
 
 # logging:
-save_path = os.path.join(args.base_path, "saves", "gcn-{}.pth")
-logfile = open(os.path.join(args.base_path, "saves", "train.log"), 'w')
+save_path = os.path.join(paths["project_path"], "saves", "{}-{}.pth".format(args.model))
+logfile = open(os.path.join(paths["project_path"], "saves", "train.log"), 'w')
+yaml.dump(args.dict(), open(os.path.join(paths["project_path"], "saves", "config.yaml"), 'w'))
 
 # data loading:
 dataset = VisDaDataset(im_size=args.img_size)
 dataloader = data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=8)
-evalloader = data.DataLoader(EagerVisDaDataset(im_size=args.img_size, mode="eval"), batch_size=1, shuffle=True)
+
+# setup evaluator:
+evaluator = Evaluator(mode="val", s="25", metrics=["miou"])
 
 # setup model:
 if args.model=="GCN": model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
@@ -62,7 +68,8 @@ def main():
 	global optimizer
 	for epoch in range(start_epoch, args.max_epochs):
 
-		for i, (image, label) in tqdm(enumerate(dataloader), total=int(len(dataset)/args.batch_size)):
+		iterations = int(len(dataset)/args.batch_size)
+		for i, (image, label) in tqdm(enumerate(dataloader), total=iterations):
 			img = autograd.Variable(image.cuda())
 			lbl = autograd.Variable(label.cuda())
 
@@ -78,15 +85,15 @@ def main():
 				logfile.write(str(loss.data[0])+"\n")
 
 			if i % args.eval_freq == 0:
-				miou = evaluate()
+				iou = evaluator.eval(model)
 				tqdm.write("Eval mIOU: {}".format(miou))
 				logfile.write("Eval mIOU: {}\n".format(miou))
 
-		print("Epoch {} completed.".format(epoch + 1))
-		logfile.write("Epoch {} completed.\n".format(epoch + 1))
+		print("Epoch {} completed.\n".format(epoch + 1))
+		logfile.write("Epoch {} completed.\n\n".format(epoch + 1))
 		torch.save(model.state_dict(), save_path.format(epoch + 1))
 
-		iou = evaluate()
+		iou = evaluator.eval(model)
 		tqdm.write("Eval mIOU: {}".format(iou))
 		logfile.write("Eval mIOU: {}\n".format(iou))
 
@@ -95,25 +102,6 @@ def main():
 
 	torch.save(model.state_dict(), save_path.format("final"))
 
-def evaluate():
-	model.eval()
-
-	iou = 0
-	samples = 0
-
-	for (img, lbl) in evalloader:
-		img = autograd.Variable(img.cuda())
-		output = model(img)
-
-		pred = np.squeeze(output.data.max(1)[1].cpu().numpy())
-		gt = np.squeeze(lbl.cpu().numpy())
-
-		iou += miou(gt, pred, dataset.num_classes)
-		samples += 1
-
-	model.train()
-	iou /= samples
-	return iou
 
 if __name__ == "__main__":
 	main()

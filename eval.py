@@ -2,133 +2,136 @@ import torch
 from torch import nn
 from torch.utils import data
 from torch.autograd import Variable
+import torch.nn.functional as F
 torch.backends.cudnn.benchmark = True
 
-import numpy as np
-import yaml
+import pydensecrf.densecrf as dcrf
+from pydensecrf.utils import create_pairwise_bilateral, create_pairwise_gaussian
+
 import os
+import yaml
 import cv2
+
+import numpy as np
 np.seterr(divide='ignore', invalid='ignore')
 
 from models.gcn import GCN
 from models.unet import UNet
-from loaders.dataloader import VisDaDataset
-from util.metrics import scores, miou, class_iou, print_scores
+
+from loaders.visda import VisDaDataset
+from loaders.cityscapes import CityscapesDataset
+
+from util.metrics import miou, class_iou
+from sklearn.metrics import confusion_matrix
+
 from util.util import *
 
-import torch.nn.functional as F
-import pydensecrf.densecrf as dcrf
-from pydensecrf.utils import create_pairwise_bilateral, create_pairwise_gaussian
-
-
 # config:
-config_path = "/home/flixpar/VisDa/config.yaml"
-args = Namespace(**yaml.load(open(config_path, 'r')))
+args = Namespace(**yaml.load(open(os.path.join(os.getcwd(), "config.yaml"), 'r')))
+paths = yaml.load(open(os.path.join(os.getcwd(), "paths.yaml"), 'r'))
 args.img_size = (int(args.scale_factor*args.default_img_size[0]), int(args.scale_factor * args.default_img_size[1]))
 
-samples = 30
-epoch = 8
+class Evaluator():
 
-save_path = "/home/flixpar/VisDa/saves/gcn-{}.pth".format(epoch)
-out_path = "/home/flixpar/VisDa/pred/"
+	def __init__(self, mode="val", s=30, metrics=["miou", "cls_iou"]):
+		samples = s
 
-dataset = VisDaDataset(im_size=args.img_size, mode="eval")
-dataloader = data.DataLoader(dataset, batch_size=1, shuffle=False) # , shuffle=True)
+		if mode == "val":
+			dataset = VisDaDataset(im_size=args.img_size)
+		elif mode == "cityscapes":
+			dataset = CityscapesDataset(im_size=args.img_size)
+		else:
+			raise ValueError("Invalid mode.")
 
-if args.model=="GCN": model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
-elif args.model=="UNet": model = UNet(dataset.num_classes).cuda()
-else: raise ValueError("Invalid model arg.")
+		dataloader = data.DataLoader(dataset, batch_size=1, num_workers=4, shuffle=True)
 
-model.load_state_dict(torch.load(save_path))
-model.eval()
+	def eval(self, model):
+		model.eval()
 
-def main():
+		iou = 0
+		cls_iou = np.zeros(dataset.num_classes)
+		cfm = np.zeros((dataset.num_classes, dataset.num_classes))
 
-	iou = 0
-	ioucrf = 0
-	cls_iou = np.zeros(dataset.num_classes)
+		for i, (image, truth) in enumerate(self.dataloader):
 
-	print("Starting predictions...")
-	for i, (image, truth) in enumerate(dataloader):
+			if i == self.samples:
+				break
 
-		if i == samples:
-			break
+			pred = predict(model, image)
+			gt = np.squeeze(truth.cpu().numpy())
 
-		pred = predict(image)
-		predcrf = pred_crf(image)
-		gt = np.squeeze(truth.cpu().numpy())
+			iou += miou(gt, pred, dataset.num_classes)
+			cls_iou = cls_iou + class_iou(gt, predcrf, dataset.num_classes)
+			cfm = cfm + confusion_matrix(gt.flatten(), pred.flatten())
 
-		# save_img(predcrf, "predcrf", i, out_path, is_lbl=True)
-		# save_img(pred, "pred", i, out_path, is_lbl=True)
-		# save_img(gt, "gt", i, out_path, is_lbl=True)
-		# save_img(reverse_img_norm(np.squeeze(image.cpu().numpy())), "src", i, out_path, is_lbl=False)
+		iou /= samples
+		cls_iou /= samples
+		cfm = cfm.astype('float') / cfm.sum(axis=1)[:, np.newaxis]
 
-		iou += miou(gt, pred, dataset.num_classes)
-		ioucrf += miou(gt, predcrf, dataset.num_classes)
+		model.train()
 
-		cls_iou = cls_iou + class_iou(gt, predcrf, dataset.num_classes)
+		res = []
+		if "miou" in metrics: res.append(iou)
+		if "cls_iou" in metrics: res.append(cls_iou)
+		if "cfm" in metrics: res.append(cfm)
+		
+		return tuple(res)
 
-		# print(miou(gt, pred, dataset.num_classes))
-		# print(miou(gt, predcrf, dataset.num_classes))
-		# print()
-		# print_scores(gt, predcrf, dataset.num_classes, i+1)
+	def predict(self, model, img):
 
-	iou /= samples
-	ioucrf /= samples
-	cls_iou /= samples
-	print()
-	print()
-	print("Mean IOU w/o CRF: {}".format(iou))
-	print("Mean IOU w/ CRF: {}".format(ioucrf))
-	print("Class IOU w/ CRF: {}".format(cls_iou))
+		# initial prediction
+		img = Variable(img.cuda())
+		output = model(img)
+		pred = F.softmax(output, dim=1)
 
-def predict(img):
+		# reformat outputs
+		img = np.squeeze(img.data.cpu().numpy())
+		img = reverse_img_norm(img)
+		pred = np.squeeze(pred.data.cpu().numpy())
 
-	img = Variable(img.cuda())
-	output = model(img)
-	pred = np.squeeze(output.data.max(1)[1].cpu().numpy())
+		# init vars
+		num_cls = pred.shape[0]
+		scale = 0.97
+		clip = 1e-8
 
-	return pred
+		# init crf
+		d = dcrf.DenseCRF2D(img.shape[1], img.shape[0], num_cls)
 
-def pred_crf(img):
+		# create unary
+		uniform = np.ones(pred.shape) / num_cls
+		U = (scale * pred) + ((1 - scale) * uniform)
+		U = np.clip(U, clip, 1.0)
+		U = -np.log(U).reshape([num_cls, -1]).astype(np.float32)
 
-	# initial prediction
-	img = Variable(img.cuda())
-	output = model(img)
-	pred = F.softmax(output, dim=1)
+		d.setUnaryEnergy(U)
 
-	# reformat outputs
-	img = np.squeeze(img.data.cpu().numpy())
-	img = reverse_img_norm(img)
-	pred = np.squeeze(pred.data.cpu().numpy())
+		# create pairwise
+		d.addPairwiseGaussian(sxy=(3,3), compat=3, kernel=dcrf.DIAG_KERNEL, normalization=dcrf.NORMALIZE_SYMMETRIC)
+		d.addPairwiseBilateral(sxy=(40,40), srgb=(15,15,15), rgbim=np.ascontiguousarray(img), compat=10, kernel=dcrf.DIAG_KERNEL,
+			normalization=dcrf.NORMALIZE_SYMMETRIC)
 
-	# init vars
-	num_cls = pred.shape[0]
-	scale = 0.97
-	clip = 1e-8
+		# inference
+		Q = d.inference(5)
+		res = np.argmax(Q, axis=0).reshape((img.shape[0], img.shape[1]))
 
-	# init crf
-	d = dcrf.DenseCRF2D(img.shape[1], img.shape[0], num_cls)
-
-	# create unary
-	uniform = np.ones(pred.shape) / num_cls
-	U = (scale * pred) + ((1 - scale) * uniform)
-	U = np.clip(U, clip, 1.0)
-	U = -np.log(U).reshape([num_cls, -1]).astype(np.float32)
-
-	d.setUnaryEnergy(U)
-
-	# create pairwise
-	d.addPairwiseGaussian(sxy=(3,3), compat=3, kernel=dcrf.DIAG_KERNEL, normalization=dcrf.NORMALIZE_SYMMETRIC)
-	d.addPairwiseBilateral(sxy=(40,40), srgb=(15,15,15), rgbim=np.ascontiguousarray(img), compat=10, kernel=dcrf.DIAG_KERNEL,
-		normalization=dcrf.NORMALIZE_SYMMETRIC)
-
-	# inference
-	Q = d.inference(5)
-	res = np.argmax(Q, axis=0).reshape((img.shape[0], img.shape[1]))
-
-	return res
+		return res
 
 
 if __name__ == "__main__":
-	main()
+
+	trained_epochs = 10
+	save_path = os.path.join(paths.project_path, "saves", "{}-{}.pth".format(args.model, trained_epochs))
+
+	if args.model=="GCN": model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
+	elif args.model=="UNet": model = UNet(dataset.num_classes).cuda()
+	else: raise ValueError("Invalid model arg.")
+
+	model.load_state_dict(torch.load(paths[]))
+	
+	evaluator = Evaluator(mode="cityscapes")
+	iou, cls_iou = evaluator.eval(model)
+
+	print()
+	print("Mean IOU: {}".format(iou))
+	print("Class IOU: {}".format(cls_iou))
+	print()

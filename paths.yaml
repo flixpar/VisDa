@@ -1,0 +1,8 @@
+{
+    project_path: "/home/flixpar/VisDa",
+    data_base_path: "/media/data/",
+    data_train_path: "/media/data/train/",
+    data_val_path: "/media/data/train/eval",
+    cityscapes_path: "/media/data/eval/",
+    pretrained_models_path: "/media/data/pretrained/"
+}
