@@ -17,8 +17,8 @@ import util.cityscapes_helper as cityscapes
 class CityscapesDataset(data.Dataset):
 
 	def __init__(self, im_size=cityscapes.shape):
-		self.image_fnlist = glob.glob(os.path.join(paths["cityscapes_path"], "**", "*.png"), recursive=True)
-		self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
+		self.image_fnlist = glob.glob(os.path.join(paths["cityscapes_path"], "images", "val", "**", "*.png"), recursive=True)
+		self.label_fnlist = [fn.replace("images", "annotations").replace("leftImg8bit", "gtFine_labelIds") for fn in self.image_fnlist]
 
 		self.num_classes = cityscapes.num_classes
 		self.img_mean = cityscapes.img_mean
