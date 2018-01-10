@@ -1,16 +1,13 @@
 import torch
-from torch import nn
 from torch.utils import data
 from torch.autograd import Variable
 import torch.nn.functional as F
 torch.backends.cudnn.benchmark = True
 
 import pydensecrf.densecrf as dcrf
-from pydensecrf.utils import create_pairwise_bilateral, create_pairwise_gaussian
 
 import os
 import yaml
-import cv2
 
 import numpy as np
 np.seterr(divide='ignore', invalid='ignore')
@@ -20,6 +17,8 @@ from models.unet import UNet
 
 from loaders.visda import VisDaDataset
 from loaders.cityscapes import CityscapesDataset
+
+from util.cityscapes_helper import cityscapes
 
 from util.metrics import miou, class_iou
 from sklearn.metrics import confusion_matrix
@@ -31,50 +30,51 @@ args = Namespace(**yaml.load(open(os.path.join(os.getcwd(), "config.yaml"), 'r')
 paths = yaml.load(open(os.path.join(os.getcwd(), "paths.yaml"), 'r'))
 args.img_size = (int(args.scale_factor*args.default_img_size[0]), int(args.scale_factor * args.default_img_size[1]))
 
-class Evaluator():
+class Evaluator:
 
-	def __init__(self, mode="val", s=30, metrics=["miou", "cls_iou"]):
-		samples = s
+	def __init__(self, mode="val", samples=30, metrics=["miou", "cls_iou"]):
+		self.n_samples = samples
+		self.metrics = metrics
 
 		if mode == "val":
-			dataset = VisDaDataset(im_size=args.img_size)
+			self.dataset = VisDaDataset(im_size=args.img_size)
 		elif mode == "cityscapes":
-			dataset = CityscapesDataset(im_size=args.img_size)
+			self.dataset = CityscapesDataset(im_size=args.img_size)
 		else:
 			raise ValueError("Invalid mode.")
 
-		dataloader = data.DataLoader(dataset, batch_size=1, num_workers=4, shuffle=True)
+		self.dataloader = data.DataLoader(self.dataset, batch_size=1, num_workers=4, shuffle=True)
 
 	def eval(self, model):
 		model.eval()
 
 		iou = 0
-		cls_iou = np.zeros(dataset.num_classes)
-		cfm = np.zeros((dataset.num_classes, dataset.num_classes))
+		cls_iou = np.zeros(self.dataset.num_classes)
+		cfm = np.zeros((self.dataset.num_classes, self.dataset.num_classes))
 
 		for i, (image, truth) in enumerate(self.dataloader):
 
-			if i == self.samples:
+			if i == self.n_samples:
 				break
 
-			pred = predict(model, image)
+			pred = self.predict(model, image)
 			gt = np.squeeze(truth.cpu().numpy())
 
-			iou += miou(gt, pred, dataset.num_classes)
-			cls_iou = cls_iou + class_iou(gt, predcrf, dataset.num_classes)
+			iou += miou(gt, pred, self.dataset.num_classes)
+			cls_iou = cls_iou + class_iou(gt, pred, self.dataset.num_classes)
 			cfm = cfm + confusion_matrix(gt.flatten(), pred.flatten())
 
-		iou /= samples
-		cls_iou /= samples
+		iou /= self.n_samples
+		cls_iou /= self.n_samples
 		cfm = cfm.astype('float') / cfm.sum(axis=1)[:, np.newaxis]
 
 		model.train()
 
 		res = []
-		if "miou" in metrics: res.append(iou)
-		if "cls_iou" in metrics: res.append(cls_iou)
-		if "cfm" in metrics: res.append(cfm)
-		
+		if "miou" in self.metrics: res.append(iou)
+		if "cls_iou" in self.metrics: res.append(cls_iou)
+		if "cfm" in self.metrics: res.append(cfm)
+
 		return tuple(res)
 
 	def predict(self, model, img):
@@ -122,12 +122,12 @@ if __name__ == "__main__":
 	trained_epochs = 10
 	save_path = os.path.join(paths.project_path, "saves", "{}-{}.pth".format(args.model, trained_epochs))
 
-	if args.model=="GCN": model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
-	elif args.model=="UNet": model = UNet(dataset.num_classes).cuda()
+	if args.model=="GCN": model = GCN(cityscapes.num_classes, args.img_size, k=args.K).cuda()
+	elif args.model=="UNet": model = UNet(cityscapes.num_classes).cuda()
 	else: raise ValueError("Invalid model arg.")
 
-	model.load_state_dict(torch.load(paths[]))
-	
+	model.load_state_dict(torch.load(save_path))
+
 	evaluator = Evaluator(mode="cityscapes")
 	iou, cls_iou = evaluator.eval(model)
 

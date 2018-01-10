@@ -1,13 +1,14 @@
+import glob
+import multiprocessing as mp
 import os
 import sys
-import glob
-import yaml
+
+import cv2
 import numpy as np
 import torch
-import cv2
+import yaml
 from torch.utils import data
 
-import multiprocessing as mp
 PROCESSORS = 8
 
 paths = yaml.load(open(os.path.join(os.getcwd(), "..", "paths.yaml"), 'r'))
@@ -27,14 +28,13 @@ class VisDaDataset(data.Dataset):
 			self.image_fnlist = glob.glob(os.path.join(root_dir, "eval", "images", "*.png"))
 			self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
 
-
 		self.num_classes = visda.num_classes
 		self.img_mean = visda.img_mean
 		self.img_stdev = visda.img_stdev
 
 		self.class_weights = torch.FloatTensor(visda.class_weights)
 
-		self.size = len(self.image_fnlist)	
+		self.size = len(self.image_fnlist)
 		self.img_size = im_size
 
 	def __getitem__(self, index):
@@ -61,9 +61,10 @@ class VisDaDataset(data.Dataset):
 	def __len__(self):
 		return self.size
 
+
 class EagerVisDaDataset(data.Dataset):
 
-	def __init__(self, im_size=shape, mode="eval"):
+	def __init__(self, im_size=visda.shape, mode="eval"):
 		if mode == "train":
 			self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
 			self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
@@ -83,7 +84,7 @@ class EagerVisDaDataset(data.Dataset):
 
 		pool = mp.Pool(PROCESSORS)
 		self.data = pool.starmap(self.load_img, zip(self.image_fnlist, self.label_fnlist))
-	
+
 	def load_img(self, img_fn, lbl_fn):
 
 		img = cv2.imread(img_fn)
@@ -110,10 +111,9 @@ class EagerVisDaDataset(data.Dataset):
 		return self.size
 
 
-
 ## Helper Functions: ##
 
-def transform_labels(self, lbl_img):
+def transform_labels(lbl_img):
 	out = np.zeros((lbl_img.shape[0], lbl_img.shape[1]))
 
 	for lbl in visda.labels:
@@ -121,4 +121,3 @@ def transform_labels(self, lbl_img):
 		out[np.where(np.all(lbl_img == lbl.color, axis=-1))] = lbl.trainId
 
 	return out
-

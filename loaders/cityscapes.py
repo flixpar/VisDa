@@ -1,4 +1,5 @@
 import os
+import sys
 import glob
 import yaml
 import numpy as np
@@ -15,15 +16,15 @@ import util.cityscapes_helper as cityscapes
 
 class CityscapesDataset(data.Dataset):
 
-	def __init__(self, im_size=base_shape):
-		self.image_fnlist = glob.glob(os.path.join(root_dir, "**", "*.png"), recursive=True)
+	def __init__(self, im_size=cityscapes.shape):
+		self.image_fnlist = glob.glob(os.path.join(paths["cityscapes_path"], "**", "*.png"), recursive=True)
 		self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
 
 		self.num_classes = cityscapes.num_classes
 		self.img_mean = cityscapes.img_mean
 		self.img_stdev = cityscapes.img_stdev
 
-		self.size = len(self.image_fnlist)	
+		self.size = len(self.image_fnlist)
 		self.img_size = im_size
 
 	def __getitem__(self, index):
@@ -52,8 +53,8 @@ class CityscapesDataset(data.Dataset):
 
 	def transform_labels(self, lbl):
 		out = np.zeros((lbl.shape[0], lbl.shape[1]))
-		
-		for i in range(num_classes):
+
+		for i in range(self.num_classes):
 			n = cityscapes.trainId2label[i].id
 			out[lbl == n] = i
 

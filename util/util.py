@@ -11,7 +11,7 @@ import visda_helper as visda
 class Namespace:
 	def __init__(self, **kwargs):
 		self.__dict__.update(kwargs)
-	def print(self):
+	def print_dict(self):
 		for key, val in sorted(self.__dict__.items()):
 			print("{}:\t{}".format(key, val))
 	def dict(self):

@@ -64,5 +64,5 @@ def transform_labels(lbl):
 	return out.astype(int)
 
 if __name__ == "__main__":
-    main()
+	main()
 

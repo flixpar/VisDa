@@ -17,6 +17,8 @@ from models.unet import UNet
 
 from loaders.visda import VisDaDataset
 
+from eval import Evaluator
+
 from util.loss import CrossEntropyLoss2d
 from util.util import Namespace, poly_lr_scheduler
 
@@ -26,11 +28,11 @@ args.img_size = (int(args.scale_factor*args.default_img_size[0]), int(args.scale
 
 paths = yaml.load(open(os.path.join(os.getcwd(), "paths.yaml"), 'r'))
 
-args.print()
+args.print_dict()
 print()
 
 # logging:
-save_path = os.path.join(paths["project_path"], "saves", "{}-{}.pth".format(args.model))
+save_path = os.path.join(paths["project_path"], "saves", args.model+"-{}.pth")
 logfile = open(os.path.join(paths["project_path"], "saves", "train.log"), 'w')
 yaml.dump(args.dict(), open(os.path.join(paths["project_path"], "saves", "config.yaml"), 'w'))
 
@@ -39,7 +41,7 @@ dataset = VisDaDataset(im_size=args.img_size)
 dataloader = data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=8)
 
 # setup evaluator:
-evaluator = Evaluator(mode="val", s="25", metrics=["miou"])
+evaluator = Evaluator(mode="val", samples=25, metrics=["miou"])
 
 # setup model:
 if args.model=="GCN": model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
@@ -86,8 +88,8 @@ def main():
 
 			if i % args.eval_freq == 0:
 				iou = evaluator.eval(model)
-				tqdm.write("Eval mIOU: {}".format(miou))
-				logfile.write("Eval mIOU: {}\n".format(miou))
+				tqdm.write("Eval mIOU: {}".format(iou))
+				logfile.write("Eval mIOU: {}\n".format(iou))
 
 		print("Epoch {} completed.\n".format(epoch + 1))
 		logfile.write("Epoch {} completed.\n\n".format(epoch + 1))

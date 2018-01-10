@@ -65,27 +65,27 @@ class_weights = [
 #--------------------------------------------------------------------------------
 
 labels = [
-	#		name			id		trainID	category		catID	color
-	Label(	unlabeled,		0,		0,		'void',			0,		(0,0,0)			),
-	Label(	road,			1,		1,		'flat',			1,		(128,64,128)	),
-	Label(	building,		2,		2,		'construction',	2,		(70,70,70)		),
-	Label(	sky,			3,		3,		'sky',			5,		(180,130,70)	),
-	Label(	sidewalk,		4,		4,		'flat',			1,		(232,35,244)	),
-	Label(	vegetation,		5,		5,		'nature',		4,		(35,142,107)	),
-	Label(	car,			6,		6,		'vehicle',		7,		(142,0,0)		),
-	Label(	terrain,		7,		7,		'nature',		4,		(152,251,152)	),
-	Label(	wall,			8,		8,		'construction',	2,		(156,102,102)	),
-	Label(	truck,			9,		9,		'vehicle',		7,		(70,0,0)		),
-	Label(	pole,			10,		10,		'object',		3,		(153,153,153)	),
-	Label(	fence,			11,		11,		'construction',	2,		(153,153,190)	),
-	Label(	person,			12,		12,		'human',		6,		(60,20,220)		),
-	Label(	bus,			13,		13,		'vehicle',		7,		(100,60,0)		),
-	Label(	traffic_light,	14,		14,		'object',		3,		(30,170,250)	),
-	Label(	traffic_sign,	15,		15,		'object',		3,		(0,220,220)		),
-	Label(	train,			16,		16,		'vehicle',		7,		(100,80,0)		),
-	Label(	rider,			17,		17,		'human',		6,		(0,0,255)		),
-	Label(	motorcycle,		18,		18,		'vehicle',		7,		(230,0,0)		),
-	Label(	bicycle,		19,		19,		'vehicle',		7,		(32,11,119)		),
+	#		name				id		trainID	category		catID	color
+	Label(	"unlabeled",		0,		0,		'void',			0,		(0,0,0)			),
+	Label(	"road",				1,		1,		'flat',			1,		(128,64,128)	),
+	Label(	"building",			2,		2,		'construction',	2,		(70,70,70)		),
+	Label(	"sky",				3,		3,		'sky',			5,		(180,130,70)	),
+	Label(	"sidewalk",			4,		4,		'flat',			1,		(232,35,244)	),
+	Label(	"vegetation",		5,		5,		'nature',		4,		(35,142,107)	),
+	Label(	"car",				6,		6,		'vehicle',		7,		(142,0,0)		),
+	Label(	"terrain",			7,		7,		'nature',		4,		(152,251,152)	),
+	Label(	"wall",				8,		8,		'construction',	2,		(156,102,102)	),
+	Label(	"truck",			9,		9,		'vehicle',		7,		(70,0,0)		),
+	Label(	"pole",				10,		10,		'object',		3,		(153,153,153)	),
+	Label(	"fence",			11,		11,		'construction',	2,		(153,153,190)	),
+	Label(	"person",			12,		12,		'human',		6,		(60,20,220)		),
+	Label(	"bus",				13,		13,		'vehicle',		7,		(100,60,0)		),
+	Label(	"traffic_light",	14,		14,		'object',		3,		(30,170,250)	),
+	Label(	"traffic_sign",		15,		15,		'object',		3,		(0,220,220)		),
+	Label(	"train",			16,		16,		'vehicle',		7,		(100,80,0)		),
+	Label(	"rider",			17,		17,		'human',		6,		(0,0,255)		),
+	Label(	"motorcycle",		18,		18,		'vehicle',		7,		(230,0,0)		),
+	Label(	"bicycle",			19,		19,		'vehicle',		7,		(32,11,119)		),
 ]
 
 
