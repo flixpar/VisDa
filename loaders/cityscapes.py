@@ -7,7 +7,9 @@ import torch
 import cv2
 from torch.utils import data
 
-paths = yaml.load(open(os.path.join(os.getcwd(), "..", "paths.yaml"), 'r'))
+paths_file = os.path.abspath(os.path.join(os.getcwd(), os.pardir, "paths.yaml"))
+paths = yaml.load(open(paths_file, 'r'))
+
 data_dir = paths["cityscapes_path"]
 sys.path.append(paths["project_path"])
 

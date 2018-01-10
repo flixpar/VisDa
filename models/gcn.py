@@ -6,7 +6,9 @@ import os
 from math import floor
 import yaml
 
-paths = yaml.load(open(os.path.join(os.getcwd(), "..", "paths.yaml"), 'r'))
+paths_file = os.path.abspath(os.path.join(os.getcwd(), os.pardir, "paths.yaml"))
+paths = yaml.load(open(paths_file, 'r'))
+
 pretrained_dir = paths["pretrained_models_path"]
 
 
