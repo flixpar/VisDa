@@ -57,7 +57,8 @@ else:
 	start_epoch = 0
 
 # setup loss and optimizer
-optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
+# optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
+optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
 criterion = CrossEntropyLoss2d(weight=dataset.class_weights).cuda()
 
 if args.resume:
