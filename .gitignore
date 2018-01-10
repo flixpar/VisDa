@@ -1,10 +1,10 @@
 *.jpg
 *.png
+config.yaml
+paths.yaml
 __pycache__/
 saves/
 save*
 pred*
-old_pred
-old_saves
-config.yaml
-paths.yaml
+old_pred/
+old_saves/
