@@ -18,7 +18,7 @@ from models.unet import UNet
 from loaders.visda import VisDaDataset
 from loaders.cityscapes import CityscapesDataset
 
-from util.cityscapes_helper import cityscapes
+import util.cityscapes_helper as cityscapes
 
 from util.metrics import miou, class_iou
 from sklearn.metrics import confusion_matrix

@@ -48,7 +48,7 @@ Label = namedtuple( 'Label' , [
 num_classes = 20
 ignore_labels = [0]
 
-base_shape = (1052, 1914)
+shape = (1052, 1914)
 
 img_mean = np.array([122.67892 , 116.66877, 104.00699])
 img_stdev = 60

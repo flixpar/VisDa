@@ -6,7 +6,7 @@ import os
 import cv2
 import numpy as np
 
-import visda_helper as visda
+import util.visda_helper as visda
 
 class Namespace:
 	def __init__(self, **kwargs):
