@@ -6,3 +6,5 @@ save*
 pred*
 old_pred
 old_saves
+config.yaml
+paths.yaml
