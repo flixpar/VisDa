@@ -46,7 +46,7 @@ dataset = VisDaDataset(im_size=args.img_size)
 dataloader = data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=8)
 
 # setup evaluator:
-evaluator = Evaluator(mode="val", samples=25, metrics=["miou"])
+evaluator = Evaluator(mode="cityscapes", samples=25, metrics=["miou"], crf=False)
 
 # setup model:
 if args.model=="GCN": model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()

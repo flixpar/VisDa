@@ -31,9 +31,10 @@ args.img_size = (int(args.scale_factor*args.default_img_size[0]), int(args.scale
 
 class Evaluator:
 
-	def __init__(self, mode="val", samples=30, metrics=["miou", "cls_iou"]):
+	def __init__(self, mode="val", samples=30, metrics=["miou", "cls_iou"], crf=True):
 		self.n_samples = samples
 		self.metrics = metrics
+		self.use_crf = crf
 
 		if mode == "val":
 			self.dataset = VisDaDataset(im_size=args.img_size)
@@ -58,7 +59,9 @@ class Evaluator:
 
 			pred = self.predict(model, image)
 			pred = self.upsample(pred)
-			pred = self.refine(pred, image_full)
+			
+			if self.use_crf:
+				pred = self.refine(pred, image_full)
 
 			iou += miou(gt, pred, self.dataset.num_classes)
 			cls_iou = cls_iou + class_iou(gt, pred, self.dataset.num_classes)
@@ -115,7 +118,7 @@ class Evaluator:
 			normalization=dcrf.NORMALIZE_SYMMETRIC)
 
 		# inference
-		Q = d.inference(5)
+		Q = d.inference(4)
 		res = np.argmax(Q, axis=0).reshape((img.shape[0], img.shape[1]))
 
 		return res
