@@ -84,9 +84,9 @@ class Evaluator:
 
 		if "miou" in self.metrics:
 			iou /= self.n_samples
-		if "miou" in self.metrics:
+		if "cls_iou" in self.metrics:
 			cls_iou /= self.n_samples
-		if "miou" in self.metrics:
+		if "cfm" in self.metrics:
 			cfm = cfm.astype('float') / cfm.sum(axis=1)[:, np.newaxis]
 
 		model.train()
