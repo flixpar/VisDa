@@ -49,9 +49,12 @@ dataloader = data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True, 
 evaluator = Evaluator(mode="cityscapes", samples=25, metrics=["miou"], crf=False)
 
 # setup model:
-if args.model=="GCN": model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
-elif args.model=="UNet": model = UNet(dataset.num_classes).cuda()
-else: raise ValueError("Invalid model arg.")
+if args.model=="GCN":
+	model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
+elif args.model=="UNet":
+	model = UNet(dataset.num_classes).cuda()
+else:
+	raise ValueError("Invalid model arg.")
 model.train()
 
 if args.resume:
@@ -62,13 +65,19 @@ else:
 	start_epoch = 0
 
 # setup loss and optimizer
-# optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
-optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+
+if args.optimizer == "SGD":
+	optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
+elif args.optimizer == "Adam":
+	optimizer = optim.Adam(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+else:
+	raise ValueError("Invalid optimizer arg.")
+
 criterion = CrossEntropyLoss2d(weight=dataset.class_weights).cuda()
 
-if args.resume:
+if args.resume and args.lr_decay and args.optimizer=="SGD":
 	poly_lr_scheduler(optimizer, args.lr, args.resume_epoch, lr_decay_iter=args.lr_decay_freq,
-		max_iter=args.max_epochs, power=args.lr_power)
+		max_iter=args.max_epochs, power=args.lr_decay_power)
 
 def main():
 
@@ -105,8 +114,9 @@ def main():
 		tqdm.write("Eval mIOU: {}".format(iou))
 		logfile.write("Eval mIOU: {}\n".format(iou))
 
-		poly_lr_scheduler(optimizer, args.lr, epoch, lr_decay_iter=args.lr_decay_freq,
-			max_iter=args.max_epochs, power=args.lr_power)
+		if args.lr_decay and args.optimizer == "SGD":
+			poly_lr_scheduler(optimizer, args.lr, epoch, lr_decay_iter=args.lr_decay_freq,
+				max_iter=args.max_epochs, power=args.lr_decay_power)
 
 	torch.save(model.state_dict(), save_path.format("final"))
 

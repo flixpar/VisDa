@@ -1,5 +1,6 @@
 {
     model: "GCN",
+    optimizer: "Adam",
 
     max_epochs: 20,
     batch_size: 8,
@@ -13,8 +14,9 @@
     scale_factor: 0.4,
     default_img_size: !!python/tuple [1052, 1914],
 
+    lr_decay: False,
     lr_decay_freq: 1,
-    lr_power: 0.9,
+    lr_decay_power: 0.9,
 
     eval_freq: 1000,
 
