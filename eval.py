@@ -9,6 +9,7 @@ import pydensecrf.densecrf as dcrf
 
 import os
 import yaml
+import time
 
 import numpy as np
 np.seterr(divide='ignore', invalid='ignore')
@@ -59,9 +60,11 @@ class Evaluator:
 
 			pred = self.predict(model, image)
 			pred = self.upsample(pred)
-			
+
 			if self.use_crf:
 				pred = self.refine(pred, image_full)
+			else:
+				pred = np.argmax(pred, axis=0)
 
 			iou += miou(gt, pred, self.dataset.num_classes)
 			cls_iou = cls_iou + class_iou(gt, pred, self.dataset.num_classes)
@@ -126,7 +129,7 @@ class Evaluator:
 
 if __name__ == "__main__":
 
-	trained_epochs = 10
+	trained_epochs = 6
 	save_path = os.path.join(paths["project_path"], "saves", "{}-{}.pth".format(args.model, trained_epochs))
 
 	if args.model=="GCN": model = GCN(cityscapes.num_classes, args.img_size, k=args.K).cuda()
@@ -135,8 +138,11 @@ if __name__ == "__main__":
 
 	model.load_state_dict(torch.load(save_path))
 
-	evaluator = Evaluator(mode="cityscapes", samples=5)
-	iou, cls_iou = evaluator.eval(model)
+	start = time.time()
+	evaluator = Evaluator(mode="cityscapes", samples=5, crf=False, metrics=["miou"])
+	iou = evaluator.eval(model)
+	end = time.time()
+	print("Took {} seconds.".format(end-start))
 
 	print()
 	print("Mean IOU: {}".format(iou))
