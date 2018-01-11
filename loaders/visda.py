@@ -38,6 +38,7 @@ class VisDaDataset(data.Dataset):
 
 		self.size = len(self.image_fnlist)
 		self.img_size = im_size
+		self.default_size = visda.shape
 
 	def __getitem__(self, index):
 		img_fn = self.image_fnlist[index]
@@ -47,8 +48,8 @@ class VisDaDataset(data.Dataset):
 		lbl = cv2.imread(lbl_fn)
 
 		size = (self.img_size[1], self.img_size[0])
-		img = cv2.resize(img, size, cv2.INTER_AREA)
-		lbl = cv2.resize(lbl, size, cv2.INTER_NEAREST)
+		img = cv2.resize(img, size, interpolation=cv2.INTER_AREA)
+		lbl = cv2.resize(lbl, size, interpolation=cv2.INTER_NEAREST)
 
 		lbl = transform_labels(lbl)
 
@@ -62,6 +63,17 @@ class VisDaDataset(data.Dataset):
 
 	def __len__(self):
 		return self.size
+
+	def get_original(self, index):
+		img_fn = self.image_fnlist[index]
+		lbl_fn = self.label_fnlist[index]
+
+		img = cv2.imread(img_fn)
+		lbl = cv2.imread(lbl_fn)
+
+		lbl = transform_labels(lbl)
+
+		return (img, lbl)
 
 
 class EagerVisDaDataset(data.Dataset):
@@ -83,6 +95,7 @@ class EagerVisDaDataset(data.Dataset):
 		self.size = len(self.image_fnlist)
 		self.img_size = im_size
 		self.shape = im_size
+		self.default_size = visda.shape
 
 		pool = mp.Pool(PROCESSORS)
 		self.data = pool.starmap(self.load_img, zip(self.image_fnlist, self.label_fnlist))
@@ -93,8 +106,8 @@ class EagerVisDaDataset(data.Dataset):
 		lbl = cv2.imread(lbl_fn)
 
 		size = (self.shape[1], self.shape[0])
-		img = cv2.resize(img, size, cv2.INTER_AREA)
-		lbl = cv2.resize(lbl, size, cv2.INTER_NEAREST)
+		img = cv2.resize(img, size, interpolation=cv2.INTER_AREA)
+		lbl = cv2.resize(lbl, size, interpolation=cv2.INTER_NEAREST)
 
 		lbl = transform_labels(lbl)
 
@@ -111,6 +124,17 @@ class EagerVisDaDataset(data.Dataset):
 
 	def __len__(self):
 		return self.size
+
+	def get_original(self, index):
+		img_fn = self.image_fnlist[index]
+		lbl_fn = self.label_fnlist[index]
+
+		img = cv2.imread(img_fn)
+		lbl = cv2.imread(lbl_fn)
+
+		lbl = transform_labels(lbl)
+
+		return (img, lbl)
 
 
 ## Helper Functions: ##

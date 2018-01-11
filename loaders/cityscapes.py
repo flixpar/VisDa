@@ -28,6 +28,7 @@ class CityscapesDataset(data.Dataset):
 
 		self.size = len(self.image_fnlist)
 		self.img_size = im_size
+		self.default_size = cityscapes.shape
 
 	def __getitem__(self, index):
 		img_fn = self.image_fnlist[index]
@@ -37,8 +38,8 @@ class CityscapesDataset(data.Dataset):
 		lbl = cv2.imread(lbl_fn, 0)
 
 		size = (self.img_size[1], self.img_size[0])
-		img = cv2.resize(img, size, cv2.INTER_AREA)
-		lbl = cv2.resize(lbl, size, cv2.INTER_NEAREST)
+		img = cv2.resize(img, size, interpolation=cv2.INTER_AREA)
+		lbl = cv2.resize(lbl, size, interpolation=cv2.INTER_NEAREST)
 
 		lbl = self.transform_labels(lbl)
 
@@ -61,3 +62,14 @@ class CityscapesDataset(data.Dataset):
 			out[lbl == n] = i
 
 		return out
+
+	def get_original(self, index):
+		img_fn = self.image_fnlist[index]
+		lbl_fn = self.label_fnlist[index]
+
+		img = cv2.imread(img_fn)
+		lbl = cv2.imread(lbl_fn, 0)
+
+		lbl = self.transform_labels(lbl)
+
+		return (img, lbl)

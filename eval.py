@@ -17,11 +17,10 @@ from models.unet import UNet
 
 from loaders.visda import VisDaDataset
 from loaders.cityscapes import CityscapesDataset
+from loaders.eval_dataloader import EvalDataloader
 
 import util.cityscapes_helper as cityscapes
-
 from util.metrics import miou, class_iou, confusion_matrix
-
 from util.util import *
 
 # config:
@@ -42,7 +41,7 @@ class Evaluator:
 		else:
 			raise ValueError("Invalid mode.")
 
-		self.dataloader = data.DataLoader(self.dataset, batch_size=1, num_workers=4, shuffle=True)
+		self.dataloader = EvalDataloader(self.dataset, self.n_samples)
 
 	def eval(self, model):
 		model.eval()
@@ -51,13 +50,12 @@ class Evaluator:
 		cls_iou = np.zeros(self.dataset.num_classes)
 		cfm = np.zeros((self.dataset.num_classes, self.dataset.num_classes))
 
-		for i, (image, truth) in enumerate(self.dataloader):
-
-			if i == self.n_samples:
-				break
+		for i in range(self.n_samples):
+			image, _, image_full, gt = self.dataloader.next()
 
 			pred = self.predict(model, image)
-			gt = np.squeeze(truth.cpu().numpy())
+			pred = self.upsample(pred)
+			pred = self.refine(pred, image_full)
 
 			iou += miou(gt, pred, self.dataset.num_classes)
 			cls_iou = cls_iou + class_iou(gt, pred, self.dataset.num_classes)
@@ -67,6 +65,7 @@ class Evaluator:
 		cls_iou /= self.n_samples
 		cfm = cfm.astype('float') / cfm.sum(axis=1)[:, np.newaxis]
 
+		self.dataloader.reset()
 		model.train()
 
 		res = []
@@ -78,15 +77,19 @@ class Evaluator:
 
 	def predict(self, model, img):
 
-		# initial prediction
 		img = Variable(img.cuda())
 		output = model(img)
 		pred = F.softmax(output, dim=1)
-
-		# reformat outputs
-		img = np.squeeze(img.data.cpu().numpy())
-		img = reverse_img_norm(img)
 		pred = np.squeeze(pred.data.cpu().numpy())
+
+		return pred
+
+	def upsample(self, img):
+		size = (self.dataset.default_size[1], self.dataset.default_size[0])
+		out = cv2.resize(img, size, interpolation=cv2.INTER_NEAREST)
+		return out
+
+	def refine(self, pred, img)
 
 		# init vars
 		num_cls = pred.shape[0]
