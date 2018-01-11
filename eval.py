@@ -146,6 +146,8 @@ if __name__ == "__main__":
 	trained_epochs = 6
 	save_path = os.path.join(paths["project_path"], "saves", "{}-{}.pth".format(args.model, trained_epochs))
 
+	args = Namespace(**yaml.load(open(os.path.join(paths["project_path"], "saves", "config.yaml"), 'r')))
+
 	if args.model=="GCN": model = GCN(cityscapes.num_classes, args.img_size, k=args.K).cuda()
 	elif args.model=="UNet": model = UNet(cityscapes.num_classes).cuda()
 	else: raise ValueError("Invalid model arg.")
