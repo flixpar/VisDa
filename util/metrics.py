@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import itertools
 from sklearn import metrics as skmetrics
+from itertools import product
 
 def _fast_hist(label_true, label_pred, n_class):
 	mask = (label_true >= 0) & (label_true < n_class)
@@ -57,6 +58,24 @@ def print_scores(pred, gt, n_classes, i=0):
 		if not np.isnan(val):
 			print("{}:\t{}".format(key, val))
 	print()
+
+def confusion_matrix(gt, pred, num_classes):
+	cfm = np.zeros((num_classes, num_classes))
+
+	gt = gt.flatten()
+	pred = pred.flatten()
+	
+	for i, j in product(range(num_classes), range(num_classes)):
+		g = np.where(gt==i)
+		p = np.where(pred==j)
+		cfm[i,j] = len(np.intersect1d(g,p))
+
+	cfm = cfm.astype(np.float32)
+	for i in range(num_classes):
+		s = cfm[i].sum()
+		if s!=0: cfm[i] /= s
+
+	return cfm
 
 def plotConfusionMatrix(gt, pred, num_classes, fn="confusion_matrix.png"):
 	cfm = skmetrics.confusion_matrix(gt.flatten(), pred.flatten())
