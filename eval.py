@@ -160,5 +160,4 @@ if __name__ == "__main__":
 
 	print()
 	print("Mean IOU: {}".format(iou))
-	print("Class IOU: {}".format(cls_iou))
 	print()
