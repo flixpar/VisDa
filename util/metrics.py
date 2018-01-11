@@ -59,7 +59,7 @@ def print_scores(pred, gt, n_classes, i=0):
 			print("{}:\t{}".format(key, val))
 	print()
 
-def confusion_matrix(gt, pred, num_classes):
+def confusion_matrix(gt, pred, num_classes, normalize=True):
 	cfm = np.zeros((num_classes, num_classes))
 
 	gt = gt.flatten()
@@ -70,10 +70,11 @@ def confusion_matrix(gt, pred, num_classes):
 		p = np.where(pred==j)
 		cfm[i,j] = len(np.intersect1d(g,p))
 
-	cfm = cfm.astype(np.float32)
-	for i in range(num_classes):
-		s = cfm[i].sum()
-		if s!=0: cfm[i] /= s
+	if normalize:
+		cfm = cfm.astype(np.float32)
+		for i in range(num_classes):
+			s = cfm[i].sum()
+			if s!=0: cfm[i] /= s
 
 	return cfm
 

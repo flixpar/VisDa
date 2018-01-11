@@ -20,8 +20,7 @@ from loaders.cityscapes import CityscapesDataset
 
 import util.cityscapes_helper as cityscapes
 
-from util.metrics import miou, class_iou
-from sklearn.metrics import confusion_matrix
+from util.metrics import miou, class_iou, confusion_matrix
 
 from util.util import *
 
@@ -62,7 +61,7 @@ class Evaluator:
 
 			iou += miou(gt, pred, self.dataset.num_classes)
 			cls_iou = cls_iou + class_iou(gt, pred, self.dataset.num_classes)
-			cfm = cfm + confusion_matrix(gt.flatten(), pred.flatten())
+			cfm = cfm + confusion_matrix(gt.flatten(), pred.flatten(), self.dataset.num_classes, normalize=False)
 
 		iou /= self.n_samples
 		cls_iou /= self.n_samples
