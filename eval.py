@@ -36,6 +36,7 @@ class Evaluator:
 		self.n_samples = samples
 		self.metrics = metrics
 		self.use_crf = crf
+		self.used = False
 
 		if mode == "val":
 			self.dataset = VisDaDataset(im_size=args.img_size)
@@ -49,9 +50,17 @@ class Evaluator:
 	def eval(self, model):
 		model.eval()
 
-		iou = 0
-		cls_iou = np.zeros(self.dataset.num_classes)
-		cfm = np.zeros((self.dataset.num_classes, self.dataset.num_classes))
+		if self.used:
+			self.dataloader.reset()
+		else:
+			self.used = True
+
+		if "miou" in self.metrics:
+			iou = 0
+		if "cls_iou" in self.metrics:
+			cls_iou = np.zeros(self.dataset.num_classes)
+		if "cfm" in self.metrics:
+			cfm = np.zeros((self.dataset.num_classes, self.dataset.num_classes))
 
 		for i in range(self.n_samples):
 			processed, full = self.dataloader.next()
@@ -66,15 +75,20 @@ class Evaluator:
 			else:
 				pred = np.argmax(pred, axis=0)
 
-			iou += miou(gt, pred, self.dataset.num_classes)
-			cls_iou = cls_iou + class_iou(gt, pred, self.dataset.num_classes)
-			cfm = cfm + confusion_matrix(gt.flatten(), pred.flatten(), self.dataset.num_classes, normalize=False)
+			if "miou" in self.metrics:
+				iou += miou(gt, pred, self.dataset.num_classes)
+			if "cls_iou" in self.metrics:
+				cls_iou = cls_iou + class_iou(gt, pred, self.dataset.num_classes)
+			if "cfm" in self.metrics:
+				cfm = cfm + confusion_matrix(gt.flatten(), pred.flatten(), self.dataset.num_classes, normalize=False)
 
-		iou /= self.n_samples
-		cls_iou /= self.n_samples
-		cfm = cfm.astype('float') / cfm.sum(axis=1)[:, np.newaxis]
+		if "miou" in self.metrics:
+			iou /= self.n_samples
+		if "miou" in self.metrics:
+			cls_iou /= self.n_samples
+		if "miou" in self.metrics:
+			cfm = cfm.astype('float') / cfm.sum(axis=1)[:, np.newaxis]
 
-		self.dataloader.reset()
 		model.train()
 
 		res = []
