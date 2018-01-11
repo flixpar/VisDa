@@ -35,8 +35,8 @@ print()
 
 save_path = os.path.join(paths["project_path"], "saves", args.model+"-{}.pth")
 
-assert not os.path.exists(save_path)
-os.mkdir(save_path)
+assert not os.path.exists(os.path.join(paths["project_path"], "saves"))
+os.mkdir(os.path.join(paths["project_path"], "saves"))
 
 logfile = open(os.path.join(paths["project_path"], "saves", "train.log"), 'w')
 yaml.dump(args.dict(), open(os.path.join(paths["project_path"], "saves", "config.yaml"), 'w'))
