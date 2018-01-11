@@ -1,7 +1,8 @@
 import random
-import multiprocessing as mp
+import torch
+import torch.multiprocessing as mp
 
-PROCESSORS = 8
+PROCESSORS = 6
 
 class EvalDataloader:
 
@@ -16,9 +17,11 @@ class EvalDataloader:
 		chosen = random.sample(range(len(self.dataset)), self.num_samples)
 
 		self.processed = pool.map(self.dataset.__getitem__, chosen)
+		self.processed = [(img.unsqueeze(0), lbl.unsqueeze(0)) for (img, lbl) in self.processed]
+
 		self.unprocessed = pool.map(self.dataset.get_original, chosen)
 
-		self.data = zip(self.processed, self.unprocessed)
+		self.data = list(zip(self.processed, self.unprocessed))
 
 	def next(self):
 		d = self.data[self.index]
@@ -26,4 +29,4 @@ class EvalDataloader:
 		return d
 
 	def reset(self):
-		self.__init__(self.dataset, self.samples)
+		self.__init__(self.dataset, self.num_samples)

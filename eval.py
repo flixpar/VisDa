@@ -1,4 +1,5 @@
 import torch
+from torch import nn
 from torch.utils import data
 from torch.autograd import Variable
 import torch.nn.functional as F
@@ -51,7 +52,9 @@ class Evaluator:
 		cfm = np.zeros((self.dataset.num_classes, self.dataset.num_classes))
 
 		for i in range(self.n_samples):
-			image, _, image_full, gt = self.dataloader.next()
+			processed, full = self.dataloader.next()
+			image, _ = processed
+			image_full, gt = full
 
 			pred = self.predict(model, image)
 			pred = self.upsample(pred)
@@ -76,20 +79,19 @@ class Evaluator:
 		return tuple(res)
 
 	def predict(self, model, img):
-
 		img = Variable(img.cuda())
 		output = model(img)
-		pred = F.softmax(output, dim=1)
-		pred = np.squeeze(pred.data.cpu().numpy())
-
+		pred = F.softmax(output, dim=1).cpu()
 		return pred
 
 	def upsample(self, img):
-		size = (self.dataset.default_size[1], self.dataset.default_size[0])
-		out = cv2.resize(img, size, interpolation=cv2.INTER_NEAREST)
+		size = self.dataset.default_size
+		upsampler = nn.Upsample(size=size, mode='bilinear')
+		out = upsampler(img)
+		out = np.squeeze(out.data.cpu().numpy())
 		return out
 
-	def refine(self, pred, img)
+	def refine(self, pred, img):
 
 		# init vars
 		num_cls = pred.shape[0]
@@ -122,7 +124,7 @@ class Evaluator:
 if __name__ == "__main__":
 
 	trained_epochs = 10
-	save_path = os.path.join(paths.project_path, "saves", "{}-{}.pth".format(args.model, trained_epochs))
+	save_path = os.path.join(paths["project_path"], "saves", "{}-{}.pth".format(args.model, trained_epochs))
 
 	if args.model=="GCN": model = GCN(cityscapes.num_classes, args.img_size, k=args.K).cuda()
 	elif args.model=="UNet": model = UNet(cityscapes.num_classes).cuda()
@@ -130,7 +132,7 @@ if __name__ == "__main__":
 
 	model.load_state_dict(torch.load(save_path))
 
-	evaluator = Evaluator(mode="cityscapes")
+	evaluator = Evaluator(mode="cityscapes", samples=5)
 	iou, cls_iou = evaluator.eval(model)
 
 	print()
