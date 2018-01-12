@@ -97,22 +97,22 @@ def main():
 			loss.backward()
 			optimizer.step()
 
-			if i % 100 == 0:
+			if i*args.batch_size % 500 == 0:
 				tqdm.write("loss: {}".format(loss.data[0]))
 				logfile.write(str(loss.data[0])+"\n")
 
-			if i % args.eval_freq == 0:
+			if i*args.batch_size % args.eval_freq == 0:
 				iou = evaluator.eval(model)
 				tqdm.write("Eval mIOU: {}".format(iou))
 				logfile.write("Eval mIOU: {}\n".format(iou))
 
-		print("Epoch {} completed.\n".format(epoch + 1))
-		logfile.write("Epoch {} completed.\n\n".format(epoch + 1))
+		print("Epoch {} completed.".format(epoch + 1))
+		logfile.write("Epoch {} completed.\n".format(epoch + 1))
 		torch.save(model.state_dict(), save_path.format(epoch + 1))
 
 		iou = evaluator.eval(model)
-		tqdm.write("Eval mIOU: {}".format(iou))
-		logfile.write("Eval mIOU: {}\n".format(iou))
+		tqdm.write("Eval mIOU: {}\n".format(iou))
+		logfile.write("Eval mIOU: {}\n\n".format(iou))
 
 		if args.lr_decay:
 			poly_lr_scheduler(optimizer, args.lr, epoch, lr_decay_iter=args.lr_decay_freq,
