@@ -36,7 +36,6 @@ class Evaluator:
 		self.n_samples = samples
 		self.metrics = metrics
 		self.use_crf = crf
-		self.used = False
 
 		if mode == "val":
 			self.dataset = VisDaDataset(im_size=args.img_size)
@@ -45,15 +44,10 @@ class Evaluator:
 		else:
 			raise ValueError("Invalid mode.")
 
-		self.dataloader = EvalDataloader(self.dataset, self.n_samples)
+		self.dataloader = data.DataLoader(EvalDataloader(self.dataset, self.n_samples), batch_size=1, shuffle=True, num_workers=6)
 
 	def eval(self, model):
 		model.eval()
-
-		if self.used:
-			self.dataloader.reset()
-		else:
-			self.used = True
 
 		if "miou" in self.metrics:
 			iou = 0
@@ -62,10 +56,7 @@ class Evaluator:
 		if "cfm" in self.metrics:
 			cfm = np.zeros((self.dataset.num_classes, self.dataset.num_classes))
 
-		for i in range(self.n_samples):
-			processed, full = self.dataloader.next()
-			image, _ = processed
-			image_full, gt = full
+		for (image, _), (image_full, gt) in self.dataloader:
 
 			pred = self.predict(model, image)
 			pred = self.upsample(pred)
