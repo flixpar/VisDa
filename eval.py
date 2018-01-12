@@ -58,6 +58,9 @@ class Evaluator:
 
 		for (image, _), (image_full, gt) in self.dataloader:
 
+			image_full = image_full.cpu().numpy()
+			gt = gt.cpu().numpy()
+
 			pred = self.predict(model, image)
 			pred = self.upsample(pred)
 
