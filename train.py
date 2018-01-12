@@ -99,11 +99,11 @@ def main():
 			loss.backward()
 			optimizer.step()
 
-			if i*args.batch_size % 500 == 0:
+			if i+1 % 500 == 0:
 				tqdm.write("loss: {}".format(loss.data[0]))
 				logfile.write(str(loss.data[0])+"\n")
 
-			if i*args.batch_size % args.eval_freq == 0:
+			if i+1 % args.eval_freq == 0:
 				iou = evaluator.eval(model)
 				tqdm.write("Eval mIOU: {}".format(iou))
 				logfile.write("Eval mIOU: {}\n".format(iou))
