@@ -35,8 +35,9 @@ print()
 
 save_path = os.path.join(paths["project_path"], "saves", args.model+"-{}.pth")
 
-assert not os.path.exists(os.path.join(paths["project_path"], "saves"))
-os.mkdir(os.path.join(paths["project_path"], "saves"))
+if not args.resume:
+	assert not os.path.exists(os.path.join(paths["project_path"], "saves"))
+	os.mkdir(os.path.join(paths["project_path"], "saves"))
 
 logfile = open(os.path.join(paths["project_path"], "saves", "train.log"), 'w')
 yaml.dump(args.dict(), open(os.path.join(paths["project_path"], "saves", "config.yaml"), 'w'))
@@ -58,6 +59,7 @@ else:
 model.train()
 
 if args.resume:
+	assert os.path.exists(os.path.join(paths["project_path"], "saves"))
 	resume_path = save_path.format(args.resume_epoch)
 	model.load_state_dict(torch.load(resume_path))
 	start_epoch = args.resume_epoch
