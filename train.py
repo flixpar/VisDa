@@ -75,7 +75,7 @@ else:
 
 criterion = CrossEntropyLoss2d(weight=dataset.class_weights).cuda()
 
-if args.resume and args.lr_decay and args.optimizer=="SGD":
+if args.resume and args.lr_decay:
 	poly_lr_scheduler(optimizer, args.lr, args.resume_epoch, lr_decay_iter=args.lr_decay_freq,
 		max_iter=args.max_epochs, power=args.lr_decay_power)
 
@@ -114,7 +114,7 @@ def main():
 		tqdm.write("Eval mIOU: {}".format(iou))
 		logfile.write("Eval mIOU: {}\n".format(iou))
 
-		if args.lr_decay and args.optimizer == "SGD":
+		if args.lr_decay:
 			poly_lr_scheduler(optimizer, args.lr, epoch, lr_decay_iter=args.lr_decay_freq,
 				max_iter=args.max_epochs, power=args.lr_decay_power)
 
