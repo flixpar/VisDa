@@ -61,9 +61,9 @@ class Evaluator:
 			cfm = np.zeros((self.dataset.num_classes, self.dataset.num_classes))
 
 		loader = self.dataloader
-		if self.standalone: loader = tqdm.tqdm(loader)
+		if self.standalone: loader = tqdm.tqdm(loader, total=self.n_samples)
 
-		for i, (image, _), (image_full, gt) in enumerate(loader):
+		for i, ((image, _), (image_full, gt)) in enumerate(loader):
 
 			image_full = np.squeeze(image_full.cpu().numpy())
 			gt = np.squeeze(gt.cpu().numpy())
@@ -72,7 +72,7 @@ class Evaluator:
 			pred = self.upsample(pred)
 
 			if self.use_crf:
-				pred_alt = pred.copy()
+				pred_alt = np.argmax(pred.copy(), axis=0)
 				pred = self.refine(pred, image_full)
 			pred = np.argmax(pred, axis=0)
 
@@ -144,7 +144,7 @@ class Evaluator:
 
 		# inference
 		Q = d.inference(4)
-		res = Q.reshape((num_cls, img.shape[0], img.shape[1]))
+		res = np.array(Q).reshape((num_cls, img.shape[0], img.shape[1]))
 
 		return res
 

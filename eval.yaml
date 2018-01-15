@@ -1,6 +1,6 @@
 version: 5
 epochs: 9
-samples: 100
+samples: 20
 mode: "cityscapes"
-crf: False
+crf: True
 save_pred: True
