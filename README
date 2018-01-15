@@ -2,9 +2,8 @@ Visual Domain Adaptation Challenge
 Semantic Segmentation
 Felix Parker
 
+Code for training on the GTA5 dataset and evaluating on Cityscapes.
+
 Implemented Architectures:
 - GCN
 - UNet
-
-Planned Architectures:
-- PSPNet
