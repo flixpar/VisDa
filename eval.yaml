@@ -3,3 +3,4 @@ epochs: 9
 samples: 100
 mode: "cityscapes"
 crf: False
+save_pred: True

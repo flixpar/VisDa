@@ -34,11 +34,12 @@ paths = yaml.load(open(os.path.join(os.getcwd(), "paths.yaml"), 'r'))
 
 class Evaluator:
 
-	def __init__(self, mode="val", samples=30, metrics=["miou", "cls_iou"], crf=True, standalone=False):
+	def __init__(self, mode="val", samples=30, metrics=["miou", "cls_iou"], crf=True, standalone=False, save_pred=False):
 		self.n_samples = samples
 		self.metrics = metrics
 		self.use_crf = crf
 		self.standalone = standalone
+		self.save_pred = save_pred
 
 		if mode == "val":
 			self.dataset = VisDaDataset(im_size=args.img_size)
@@ -62,7 +63,7 @@ class Evaluator:
 		loader = self.dataloader
 		if self.standalone: loader = tqdm.tqdm(loader)
 
-		for (image, _), (image_full, gt) in loader:
+		for i, (image, _), (image_full, gt) in enumerate(loader):
 
 			image_full = np.squeeze(image_full.cpu().numpy())
 			gt = np.squeeze(gt.cpu().numpy())
@@ -71,9 +72,16 @@ class Evaluator:
 			pred = self.upsample(pred)
 
 			if self.use_crf:
+				pred_alt = pred.copy()
 				pred = self.refine(pred, image_full)
-			else:
-				pred = np.argmax(pred, axis=0)
+			pred = np.argmax(pred, axis=0)
+
+			if self.save_pred:
+				path = os.path.join(paths["project_path"], "pred")
+				if self.use_crf:
+					save_set(image_full, gt, pred_alt, pred, i+1, path)
+				else:
+					save_set(image_full, gt, pred, None, i+1, path)
 
 			if "miou" in self.metrics:
 				iou.append(miou(gt, pred, self.dataset.num_classes, ignore_zero=False))
@@ -136,7 +144,7 @@ class Evaluator:
 
 		# inference
 		Q = d.inference(4)
-		res = np.argmax(Q, axis=0).reshape((img.shape[0], img.shape[1]))
+		res = Q.reshape((num_cls, img.shape[0], img.shape[1]))
 
 		return res
 
@@ -164,12 +172,14 @@ if __name__ == "__main__":
 	if args.model=="GCN": model = GCN(cityscapes.num_classes, args.img_size, k=args.K).cuda()
 	elif args.model=="UNet": model = UNet(cityscapes.num_classes).cuda()
 	else: raise ValueError("Invalid model arg.")
-
 	model.load_state_dict(torch.load(save_path))
 
 	start = time.time()
-	evaluator = Evaluator(mode=eval_args["mode"], samples=eval_args["samples"], crf=eval_args["crf"], metrics=["miou", "cls_iou"])
+
+	evaluator = Evaluator(mode=eval_args["mode"], samples=eval_args["samples"], crf=eval_args["crf"],
+		metrics=["miou", "cls_iou"], standalone=True, save_pred=eval_args["save_pred"])
 	iou, cls_iou = evaluator.eval(model)
+
 	end = time.time()
 
 	print("Took {} seconds.".format(end-start))

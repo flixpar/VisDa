@@ -38,6 +38,16 @@ def recolor(lbl):
 		out[lbl==label.trainId] = label.color
 	return out
 
+def save_set(src, gt, pred, pred_crf, num, path):
+	if src is not None:
+		save_img(src, "src", num, path, is_lbl=False)
+	if gt is not None:
+		save_img(gt, "gt", num, path, is_lbl=True)
+	if pred is not None:
+		save_img(pred, "pred", num, path, is_lbl=True)
+	if pred_crf is not None:
+		save_img(pred_crf, "predcrf", num, path, is_lbl=True)
+
 def save_img(img, name, num, out_path, is_lbl=False):
 	fn = "{}_{}.png".format(num, name)
 	path = os.path.join(out_path, fn)
