@@ -10,6 +10,7 @@ import pydensecrf.densecrf as dcrf
 import os
 import yaml
 import time
+import tqdm
 
 import numpy as np
 np.seterr(divide='ignore', invalid='ignore')
@@ -25,17 +26,19 @@ import util.cityscapes_helper as cityscapes
 from util.metrics import miou, class_iou, confusion_matrix
 from util.util import *
 
-# config:
 args = Namespace(**yaml.load(open(os.path.join(os.getcwd(), "config.yaml"), 'r')))
-paths = yaml.load(open(os.path.join(os.getcwd(), "paths.yaml"), 'r'))
 args.img_size = (int(args.scale_factor*args.default_img_size[0]), int(args.scale_factor * args.default_img_size[1]))
+
+paths = yaml.load(open(os.path.join(os.getcwd(), "paths.yaml"), 'r'))
+
 
 class Evaluator:
 
-	def __init__(self, mode="val", samples=30, metrics=["miou", "cls_iou"], crf=True):
+	def __init__(self, mode="val", samples=30, metrics=["miou", "cls_iou"], crf=True, standalone=False):
 		self.n_samples = samples
 		self.metrics = metrics
 		self.use_crf = crf
+		self.standalone = standalone
 
 		if mode == "val":
 			self.dataset = VisDaDataset(im_size=args.img_size)
@@ -50,13 +53,16 @@ class Evaluator:
 		model.eval()
 
 		if "miou" in self.metrics:
-			iou = 0
+			iou = []
 		if "cls_iou" in self.metrics:
 			cls_iou = np.zeros(self.dataset.num_classes)
 		if "cfm" in self.metrics:
 			cfm = np.zeros((self.dataset.num_classes, self.dataset.num_classes))
 
-		for (image, _), (image_full, gt) in self.dataloader:
+		loader = self.dataloader
+		if self.standalone: loader = tqdm.tqdm(loader)
+
+		for (image, _), (image_full, gt) in loader:
 
 			image_full = np.squeeze(image_full.cpu().numpy())
 			gt = np.squeeze(gt.cpu().numpy())
@@ -70,26 +76,26 @@ class Evaluator:
 				pred = np.argmax(pred, axis=0)
 
 			if "miou" in self.metrics:
-				iou += miou(gt, pred, self.dataset.num_classes)
+				iou.append(miou(gt, pred, self.dataset.num_classes, ignore_zero=False))
 			if "cls_iou" in self.metrics:
 				cls_iou = cls_iou + class_iou(gt, pred, self.dataset.num_classes)
 			if "cfm" in self.metrics:
 				cfm = cfm + confusion_matrix(gt.flatten(), pred.flatten(), self.dataset.num_classes, normalize=False)
 
+		
+		res = []
 		if "miou" in self.metrics:
-			iou /= self.n_samples
+			meaniou = np.asarray(iou).mean()
+			stdeviou = np.asarray(iou).std()
+			res.append((meaniou, stdeviou))
 		if "cls_iou" in self.metrics:
 			cls_iou /= self.n_samples
+			res.append(cls_iou)
 		if "cfm" in self.metrics:
 			cfm = cfm.astype('float') / cfm.sum(axis=1)[:, np.newaxis]
+			res.append(cfm)
 
 		model.train()
-
-		res = []
-		if "miou" in self.metrics: res.append(iou)
-		if "cls_iou" in self.metrics: res.append(cls_iou)
-		if "cfm" in self.metrics: res.append(cfm)
-
 		return tuple(res)
 
 	def predict(self, model, img):
@@ -137,10 +143,23 @@ class Evaluator:
 
 if __name__ == "__main__":
 
-	trained_epochs = 6
-	save_path = os.path.join(paths["project_path"], "saves", "{}-{}.pth".format(args.model, trained_epochs))
+	eval_args = yaml.load(open(os.path.join(os.getcwd(), "eval.yaml"), 'r'))
+	args = Namespace(**yaml.load(open(os.path.join(paths["project_path"], "saves{}".format(eval_args["version"]), "config.yaml"), 'r')))
 
-	args = Namespace(**yaml.load(open(os.path.join(paths["project_path"], "saves", "config.yaml"), 'r')))
+	trained_epochs = eval_args["epochs"]
+	save_path = os.path.join(paths["project_path"], "saves{}".format(eval_args["version"]), "{}-{}.pth".format(args.model, trained_epochs))
+
+	print()
+	print("size:\t{}".format(args.img_size))
+	print("scale factor:\t{}".format(args.scale_factor))
+	print("batch size:\t{}".format(args.batch_size))
+	print("K:\t{}".format(args.K))
+	print()
+	print("version:\t{}".format(eval_args["version"]))
+	print("epochs: \t{}".format(eval_args["epochs"]))
+	print("samples:\t{}".format(eval_args["samples"]))
+	print("used CRF:\t{}".format(eval_args["crf"]))
+	print()
 
 	if args.model=="GCN": model = GCN(cityscapes.num_classes, args.img_size, k=args.K).cuda()
 	elif args.model=="UNet": model = UNet(cityscapes.num_classes).cuda()
@@ -149,11 +168,15 @@ if __name__ == "__main__":
 	model.load_state_dict(torch.load(save_path))
 
 	start = time.time()
-	evaluator = Evaluator(mode="cityscapes", samples=5, crf=False, metrics=["miou"])
-	iou = evaluator.eval(model)
+	evaluator = Evaluator(mode=eval_args["mode"], samples=eval_args["samples"], crf=eval_args["crf"], metrics=["miou", "cls_iou"])
+	iou, cls_iou = evaluator.eval(model)
 	end = time.time()
-	print("Took {} seconds.".format(end-start))
 
+	print("Took {} seconds.".format(end-start))
 	print()
 	print("Mean IOU: {}".format(iou))
+	print("Mean class IOU:")
+	for i in cls_iou:
+		print(i)
 	print()
+

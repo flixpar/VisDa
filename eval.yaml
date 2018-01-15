@@ -1,0 +1,5 @@
+version: 5
+epochs: 9
+samples: 100
+mode: "cityscapes"
+crf: False
