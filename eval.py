@@ -34,12 +34,13 @@ paths = yaml.load(open(os.path.join(os.getcwd(), "paths.yaml"), 'r'))
 
 class Evaluator:
 
-	def __init__(self, mode="val", samples=30, metrics=["miou", "cls_iou"], crf=True, standalone=False, save_pred=False):
+	def __init__(self, mode="val", samples=30, metrics=["miou", "cls_iou"], crf=True, standalone=False, save_pred=False, per_image=False):
 		self.n_samples = samples
 		self.metrics = metrics
 		self.use_crf = crf
 		self.standalone = standalone
 		self.save_pred = save_pred
+		self.per_image = per_image
 
 		if mode == "val":
 			self.dataset = VisDaDataset(im_size=args.img_size)
@@ -86,9 +87,17 @@ class Evaluator:
 			if "miou" in self.metrics:
 				iou.append(miou(gt, pred, self.dataset.num_classes, ignore_zero=False))
 			if "cls_iou" in self.metrics:
-				cls_iou = cls_iou + class_iou(gt, pred, self.dataset.num_classes)
+				temp = class_iou(gt, pred, self.dataset.num_classes)
+				temp = temp[temp==np.nan] = 0
+				cls_iou = cls_iou + temp
 			if "cfm" in self.metrics:
 				cfm = cfm + confusion_matrix(gt.flatten(), pred.flatten(), self.dataset.num_classes, normalize=False)
+
+			if self.per_image:
+				print("Image {}".format(i+1))
+				print("mIOU: {}".format(miou(gt, pred, self.dataset.num_classes, ignore_zero=False)))
+				print("class IOU: {}".format(list(class_iou(gt, pred, self.dataset.num_classes))))
+				print()
 
 		
 		res = []
@@ -177,7 +186,7 @@ if __name__ == "__main__":
 	start = time.time()
 
 	evaluator = Evaluator(mode=eval_args["mode"], samples=eval_args["samples"], crf=eval_args["crf"],
-		metrics=["miou", "cls_iou"], standalone=True, save_pred=eval_args["save_pred"])
+		metrics=["miou", "cls_iou"], standalone=True, save_pred=eval_args["save_pred"], per_image=eval_args["per_image"])
 	iou, cls_iou = evaluator.eval(model)
 
 	end = time.time()

@@ -4,3 +4,4 @@ samples: 20
 mode: "cityscapes"
 crf: True
 save_pred: True
+per_image: False
