@@ -10,7 +10,7 @@ import pydensecrf.densecrf as dcrf
 import os
 import yaml
 import time
-import tqdm
+from tqdm import tqdm
 
 import numpy as np
 np.seterr(divide='ignore', invalid='ignore')
@@ -62,7 +62,7 @@ class Evaluator:
 			cfm = np.zeros((self.dataset.num_classes, self.dataset.num_classes))
 
 		loader = self.dataloader
-		if self.standalone: loader = tqdm.tqdm(loader, total=self.n_samples)
+		if self.standalone: loader = tqdm(loader, total=self.n_samples)
 
 		for i, ((image, _), (image_full, gt)) in enumerate(loader):
 
@@ -88,16 +88,16 @@ class Evaluator:
 				iou.append(miou(gt, pred, self.dataset.num_classes, ignore_zero=False))
 			if "cls_iou" in self.metrics:
 				temp = class_iou(gt, pred, self.dataset.num_classes)
-				temp = temp[temp==np.nan] = 0
+				temp = np.nan_to_num(temp)
 				cls_iou = cls_iou + temp
 			if "cfm" in self.metrics:
 				cfm = cfm + confusion_matrix(gt.flatten(), pred.flatten(), self.dataset.num_classes, normalize=False)
 
-			if self.per_image:
-				print("Image {}".format(i+1))
-				print("mIOU: {}".format(miou(gt, pred, self.dataset.num_classes, ignore_zero=False)))
-				print("class IOU: {}".format(list(class_iou(gt, pred, self.dataset.num_classes))))
-				print()
+			if self.per_image and self.standalone:
+				tqdm.write("Image {}".format(i+1))
+				tqdm.write("mIOU: {}".format(miou(gt, pred, self.dataset.num_classes, ignore_zero=False)))
+				tqdm.write("class IOU: {}".format(list(class_iou(gt, pred, self.dataset.num_classes))))
+				tqdm.write("\n")
 
 		
 		res = []
