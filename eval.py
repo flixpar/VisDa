@@ -109,13 +109,14 @@ class Evaluator:
 				k = 0.01 * pred.size
 				a,b = np.unique(pred, return_counts=True)
 				p = dict(zip(a,b))
-				g = np.unique(gt)
-				matches = [((i in g) == (i in p.keys() and p[i]>k)) for i in range(self.dataset.num_classes)]
+				a,b = np.unique(gt, return_counts=True)
+				g = dict(zip(a,b))
+				matches = [((i in g.keys() == i in p.keys()) and (g[i]>k == p[i]>k)) for i in range(self.dataset.num_classes)]
 				good[i] = matches
 
 			if self.per_image and self.standalone:
 				tqdm.write("Image {}".format(i+1))
-				tqdm.write("Name: {}".format(name))
+				if len(l)==3: tqdm.write("Name: {}".format(name))
 				if "miou" in self.metrics: tqdm.write("mIOU: {}".format(img_miou))
 				if "cls_iou" in self.metrics: tqdm.write("class IOU: {}".format(list(img_clsiou)))
 				if "classmatch" in self.metrics: tqdm.write("Matches: {}".format((list(good[i]))))
@@ -223,6 +224,7 @@ if __name__ == "__main__":
 	for i in cls_iou:
 		print(i)
 	print()
+	print("Matches:")
 	print(matches)
 	print()
 
