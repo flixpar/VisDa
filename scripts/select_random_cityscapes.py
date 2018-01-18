@@ -7,9 +7,9 @@ num_samples = 200
 src_path = "/media/data/cityscapes/"
 dest_path = "/home/flixpar/eval/"
 
-image_fnlist = glob.glob(os.path.join(src_path, "images", "val", "**", "*.png"), recursive=True)
+image_fnlist = glob(os.path.join(src_path, "images", "val", "**", "*.png"), recursive=True)
 image_fnlist = random.sample(image_fnlist, num_samples)
-label_fnlist = [fn.replace("images", "annotations").replace("leftImg8bit", "gtFine_labelIds") for fn in self.image_fnlist]
+label_fnlist = [fn.replace("images", "annotations").replace("leftImg8bit", "gtFine_labelIds") for fn in image_fnlist]
 
 for i, (img_fn, lbl_fn) in enumerate(zip(image_fnlist, label_fnlist)):
 	print("{} --> {}".format(img_fn, i))
