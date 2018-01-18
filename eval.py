@@ -98,13 +98,6 @@ class Evaluator:
 			if "cfm" in self.metrics:
 				cfm = cfm + img_cfm
 			if "classmatch" in self.metrics:
-				# matches = [i>0.05 for i in img_clsiou]
-				# good[i][matches] = True
-				# k = 0.01 * pred.size
-				# unique, counts = np.unique(pred, return_counts=True)
-				# counts = dict(zip(unique, counts))
-				# matches = [(i in counts.keys() and counts[i]>k) for i in range(self.dataset.num_classes)]
-				# good[i] = matches
 				k = 0.01 * pred.size
 				a,b = np.unique(pred, return_counts=True)
 				p = dict(zip(a,b))
