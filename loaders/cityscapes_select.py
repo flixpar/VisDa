@@ -56,7 +56,6 @@ class CityscapesSelectDataset(data.Dataset):
 		return (img, lbl), (src_img, src_lbl), name
 
 	def __len__(self):
-		# return self.size
 		return self.n_samples
 
 	def transform_labels(self, lbl):

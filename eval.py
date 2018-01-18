@@ -69,7 +69,6 @@ class Evaluator:
 		loader = self.dataloader
 		if self.standalone: loader = tqdm(loader, total=self.n_samples)
 
-		# for i, ((image, _), (image_full, gt)) in enumerate(loader):
 		for i, l in enumerate(loader):
 			if len(l)==2:
 				(image, _), (image_full, gt) = l
@@ -98,13 +97,13 @@ class Evaluator:
 			img_clsiou = class_iou(gt, pred, self.dataset.num_classes)
 			img_miou = np.nanmean(img_clsiou)
 			img_clsiou = np.nan_to_num(img_clsiou)
-			img_cfm = confusion_matrix(gt.flatten(), pred.flatten(), self.dataset.num_classes, normalize=False)
 
 			if "miou" in self.metrics:
 				iou.append(img_miou)
 			if "cls_iou" in self.metrics:
 				cls_iou = cls_iou + img_clsiou
 			if "cfm" in self.metrics:
+				img_cfm = confusion_matrix(gt.flatten(), pred.flatten(), self.dataset.num_classes, normalize=False)
 				cfm = cfm + img_cfm
 			if "classmatch" in self.metrics:
 				k = 0.01 * pred.size
@@ -114,13 +113,12 @@ class Evaluator:
 				matches = [((i in g) == (i in p.keys() and p[i]>k)) for i in range(self.dataset.num_classes)]
 				good[i] = matches
 
-
 			if self.per_image and self.standalone:
 				tqdm.write("Image {}".format(i+1))
 				tqdm.write("Name: {}".format(name))
-				tqdm.write("mIOU: {}".format(miou(gt, pred, self.dataset.num_classes, ignore_zero=False)))
-				tqdm.write("class IOU: {}".format(list(class_iou(gt, pred, self.dataset.num_classes))))
-				tqdm.write("matches: {}".format((list(good[i]))))
+				if "miou" in self.metrics: tqdm.write("mIOU: {}".format(img_miou))
+				if "cls_iou" in self.metrics: tqdm.write("class IOU: {}".format(list(img_clsiou)))
+				if "classmatch" in self.metrics: tqdm.write("Matches: {}".format((list(good[i]))))
 				tqdm.write("\n")
 
 		
