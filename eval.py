@@ -60,6 +60,8 @@ class Evaluator:
 			cls_iou = np.zeros(self.dataset.num_classes)
 		if "cfm" in self.metrics:
 			cfm = np.zeros((self.dataset.num_classes, self.dataset.num_classes))
+		if "classmatch" in self.metrics:
+			good = np.zeros((self.n_samples, self.dataset.num_classes), dtype=np.bool)
 
 		loader = self.dataloader
 		if self.standalone: loader = tqdm(loader, total=self.n_samples)
@@ -84,14 +86,20 @@ class Evaluator:
 				else:
 					save_set(image_full, gt, pred, None, i+1, path)
 
+			img_clsiou = class_iou(gt, pred, self.dataset.num_classes)
+			img_miou = np.nanmean(img_clsiou)
+			img_clsiou = np.nan_to_num(img_clsiou)
+			img_cfm = confusion_matrix(gt.flatten(), pred.flatten(), self.dataset.num_classes, normalize=False)
+
 			if "miou" in self.metrics:
-				iou.append(miou(gt, pred, self.dataset.num_classes, ignore_zero=False))
+				iou.append(img_miou)
 			if "cls_iou" in self.metrics:
-				temp = class_iou(gt, pred, self.dataset.num_classes)
-				temp = np.nan_to_num(temp)
-				cls_iou = cls_iou + temp
+				cls_iou = cls_iou + img_clsiou
 			if "cfm" in self.metrics:
-				cfm = cfm + confusion_matrix(gt.flatten(), pred.flatten(), self.dataset.num_classes, normalize=False)
+				cfm = cfm + img_cfm
+			if "classmatch" in self.metrics:
+				matches = [i>0.05 for i in img_clsiou]
+				good[i][matches] = True
 
 			if self.per_image and self.standalone:
 				tqdm.write("Image {}".format(i+1))
@@ -111,6 +119,8 @@ class Evaluator:
 		if "cfm" in self.metrics:
 			cfm = cfm.astype('float') / cfm.sum(axis=1)[:, np.newaxis]
 			res.append(cfm)
+		if "classmatch" in self.metrics:
+			res.append(good)
 
 		model.train()
 		return tuple(res)
@@ -186,8 +196,8 @@ if __name__ == "__main__":
 	start = time.time()
 
 	evaluator = Evaluator(mode=eval_args["mode"], samples=eval_args["samples"], crf=eval_args["crf"],
-		metrics=["miou", "cls_iou"], standalone=True, save_pred=eval_args["save_pred"], per_image=eval_args["per_image"])
-	iou, cls_iou = evaluator.eval(model)
+		metrics=["miou","cls_iou","classmatch"], standalone=True, save_pred=eval_args["save_pred"], per_image=eval_args["per_image"])
+	iou, cls_iou, matches = evaluator.eval(model)
 
 	end = time.time()
 
@@ -197,5 +207,6 @@ if __name__ == "__main__":
 	print("Mean class IOU:")
 	for i in cls_iou:
 		print(i)
+	print(matches)
 	print()
 
