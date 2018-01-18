@@ -48,7 +48,7 @@ class Evaluator:
 		elif mode == "cityscapes":
 			self.dataset = EvalDataloader(CityscapesDataset(im_size=args.img_size), self.n_samples)
 		elif mode == "cityscapes_select":
-			self.dataset = CityscapesSelectDataset(im_size=args.img_size)
+			self.dataset = CityscapesSelectDataset(im_size=args.img_size, n_samples=self.n_samples)
 		else:
 			raise ValueError("Invalid mode.")
 
@@ -69,7 +69,13 @@ class Evaluator:
 		loader = self.dataloader
 		if self.standalone: loader = tqdm(loader, total=self.n_samples)
 
-		for i, ((image, _), (image_full, gt)) in enumerate(loader):
+		# for i, ((image, _), (image_full, gt)) in enumerate(loader):
+		for i, l in enumerate(loader):
+			if len(l)==2:
+				(image, _), (image_full, gt) = l
+			elif len(l)==3:
+				(image, _), (image_full, gt), (name) = l
+				name = name[0]
 
 			image_full = np.squeeze(image_full.cpu().numpy())
 			gt = np.squeeze(gt.cpu().numpy())
@@ -111,6 +117,7 @@ class Evaluator:
 
 			if self.per_image and self.standalone:
 				tqdm.write("Image {}".format(i+1))
+				tqdm.write("Name: {}".format(name))
 				tqdm.write("mIOU: {}".format(miou(gt, pred, self.dataset.num_classes, ignore_zero=False)))
 				tqdm.write("class IOU: {}".format(list(class_iou(gt, pred, self.dataset.num_classes))))
 				tqdm.write("matches: {}".format((list(good[i]))))
@@ -213,9 +220,11 @@ if __name__ == "__main__":
 	print("Took {} seconds.".format(end-start))
 	print()
 	print("Mean IOU: {}".format(iou))
+	print()
 	print("Mean class IOU:")
 	for i in cls_iou:
 		print(i)
+	print()
 	print(matches)
 	print()
 

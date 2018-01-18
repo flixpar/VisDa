@@ -18,8 +18,8 @@ import util.cityscapes_helper as cityscapes
 
 class CityscapesSelectDataset(data.Dataset):
 
-	def __init__(self, im_size=cityscapes.shape):
-		self.image_fnlist = glob.glob(os.path.join(data_dir, "img*.png"))
+	def __init__(self, im_size=cityscapes.shape, n_samples=30):
+		self.image_fnlist = sorted(glob.glob(os.path.join(data_dir, "*_img.png")))
 		self.label_fnlist = [fn.replace("img", "lbl") for fn in self.image_fnlist]
 
 		self.num_classes = cityscapes.num_classes
@@ -30,18 +30,22 @@ class CityscapesSelectDataset(data.Dataset):
 		self.img_size = im_size
 		self.default_size = cityscapes.shape
 
+		self.n_samples = n_samples
+
 	def __getitem__(self, index):
 		img_fn = self.image_fnlist[index]
 		lbl_fn = self.label_fnlist[index]
 
+		name = img_fn.split('/')[-1].split('_')[0]
+
 		src_img = cv2.imread(img_fn)
 		src_lbl = cv2.imread(lbl_fn, 0)
 
-		size = (self.img_size[1], self.img_size[0])
-		img = cv2.resize(src_img, size, interpolation=cv2.INTER_AREA)
-		lbl = cv2.resize(src_lbl, size, interpolation=cv2.INTER_NEAREST)
+		src_lbl = self.transform_labels(src_lbl)
 
-		lbl = self.transform_labels(lbl)
+		size = (self.img_size[1], self.img_size[0])
+		img = cv2.resize(src_img.copy(), size, interpolation=cv2.INTER_AREA)
+		lbl = cv2.resize(src_lbl.copy(), size, interpolation=cv2.INTER_NEAREST)
 
 		img = img - self.img_mean
 		img /= self.img_stdev
@@ -49,10 +53,11 @@ class CityscapesSelectDataset(data.Dataset):
 		img = torch.from_numpy(img).permute(2, 0, 1).type(torch.FloatTensor)
 		lbl = torch.from_numpy(lbl).type(torch.LongTensor)
 
-		return (img, lbl), (src_img, src_lbl)
+		return (img, lbl), (src_img, src_lbl), name
 
 	def __len__(self):
-		return self.size
+		# return self.size
+		return self.n_samples
 
 	def transform_labels(self, lbl):
 		out = np.zeros((lbl.shape[0], lbl.shape[1]))
