@@ -20,6 +20,7 @@ from models.unet import UNet
 
 from loaders.visda import VisDaDataset
 from loaders.cityscapes import CityscapesDataset
+from loaders.cityscapes_select import CityscapesSelectDataset
 from loaders.eval_dataloader import EvalDataloader
 
 import util.cityscapes_helper as cityscapes
@@ -43,13 +44,15 @@ class Evaluator:
 		self.per_image = per_image
 
 		if mode == "val":
-			self.dataset = VisDaDataset(im_size=args.img_size)
+			self.dataset = EvalDataloader(VisDaDataset(im_size=args.img_size), self.n_samples)
 		elif mode == "cityscapes":
-			self.dataset = CityscapesDataset(im_size=args.img_size)
+			self.dataset = EvalDataloader(CityscapesDataset(im_size=args.img_size), self.n_samples)
+		elif mode == "cityscapes_select":
+			self.dataset = CityscapesSelectDataset(im_size=args.img_size)
 		else:
 			raise ValueError("Invalid mode.")
 
-		self.dataloader = data.DataLoader(EvalDataloader(self.dataset, self.n_samples), batch_size=1, shuffle=True, num_workers=6)
+		self.dataloader = data.DataLoader(self.dataset, batch_size=1, shuffle=False, num_workers=6)
 
 	def eval(self, model):
 		model.eval()

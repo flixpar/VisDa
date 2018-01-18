@@ -1,7 +1,7 @@
 version: 7
 epochs: 10
 samples: 10
-mode: "cityscapes"
+mode: "cityscapes_select"
 crf: False
 save_pred: False
 per_image: True
