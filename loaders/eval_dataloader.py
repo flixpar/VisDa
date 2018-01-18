@@ -3,7 +3,7 @@ from torch.utils import data
 
 class EvalDataloader(data.Dataset):
 
-	def __init__(self, dataset, samples):
+	def __init__(self, dataset, samples, rand=True):
 
 		self.dataset = dataset
 		self.num_samples = samples
