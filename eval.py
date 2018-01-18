@@ -98,13 +98,26 @@ class Evaluator:
 			if "cfm" in self.metrics:
 				cfm = cfm + img_cfm
 			if "classmatch" in self.metrics:
-				matches = [i>0.05 for i in img_clsiou]
-				good[i][matches] = True
+				# matches = [i>0.05 for i in img_clsiou]
+				# good[i][matches] = True
+				# k = 0.01 * pred.size
+				# unique, counts = np.unique(pred, return_counts=True)
+				# counts = dict(zip(unique, counts))
+				# matches = [(i in counts.keys() and counts[i]>k) for i in range(self.dataset.num_classes)]
+				# good[i] = matches
+				k = 0.01 * pred.size
+				a,b = np.unique(pred, return_counts=True)
+				p = dict(zip(a,b))
+				g = np.unique(gt)
+				matches = [((i in g) == (i in p.keys() and p[i]>k)) for i in range(self.dataset.num_classes)]
+				good[i] = matches
+
 
 			if self.per_image and self.standalone:
 				tqdm.write("Image {}".format(i+1))
 				tqdm.write("mIOU: {}".format(miou(gt, pred, self.dataset.num_classes, ignore_zero=False)))
 				tqdm.write("class IOU: {}".format(list(class_iou(gt, pred, self.dataset.num_classes))))
+				tqdm.write("matches: {}".format((list(good[i]))))
 				tqdm.write("\n")
 
 		
