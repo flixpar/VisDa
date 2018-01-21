@@ -32,16 +32,13 @@ def scores(label_trues, label_preds, n_class):
 			'FreqW Acc': fwavacc,
 			'Mean IoU': mean_iu,}, cls_iu
 
-def miou(label_trues, label_preds, n_class, ignore_zero=False):
-	hist = np.zeros((n_class, n_class))
-	for lt, lp in zip(label_trues, label_preds):
-		hist += _fast_hist(lt.flatten(), lp.flatten(), n_class)
-	iu = np.diag(hist) / (hist.sum(axis=1) + hist.sum(axis=0) - np.diag(hist))
+def calc_miou(label_trues, label_preds, n_class, ignore_zero=False):
+	iu = calc_class_iou(label_trues, label_preds, n_class)
 	if ignore_zero: iu[0] = np.nan
 	mean_iu = np.nanmean(iu)
 	return mean_iu
 
-def class_iou(label_trues, label_preds, n_class):
+def calc_class_iou(label_trues, label_preds, n_class):
 	hist = np.zeros((n_class, n_class))
 	for lt, lp in zip(label_trues, label_preds):
 		hist += _fast_hist(lt.flatten(), lp.flatten(), n_class)
