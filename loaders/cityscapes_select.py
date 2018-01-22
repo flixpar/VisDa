@@ -6,6 +6,7 @@ import numpy as np
 import torch
 import cv2
 from torch.utils import data
+from skimage.exposure import equalize_adapthist, rescale_intensity
 
 from util.setup import load_args
 args = load_args(os.getcwd())
@@ -42,6 +43,7 @@ class CityscapesSelectDataset(data.Dataset):
 		src_img = cv2.imread(img_fn)
 		src_lbl = cv2.imread(lbl_fn, 0)
 
+		src_img = self.enhance_contrast(src_img)
 		src_lbl = self.transform_labels(src_lbl)
 
 		size = (self.img_size[1], self.img_size[0])
@@ -78,3 +80,10 @@ class CityscapesSelectDataset(data.Dataset):
 		lbl = self.transform_labels(lbl)
 
 		return (img, lbl)
+
+	def enhance_contrast(self, img):
+		img = img[...,::-1]
+		img = equalize_adapthist(img)
+		img = rescale_intensity(img, out_range=(0, 255)).astype(np.uint8)
+		img = img[...,::-1]
+		return img
