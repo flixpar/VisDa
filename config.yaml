@@ -1,46 +1,46 @@
 {
     model: "GCN",
-    optimizer: "Adam",
+    optimizer: "SGD",
 
-    max_epochs: 20,
-    batch_size: 8,
+    max_epochs: 12,
+    batch_size: 6,
 
-    lr: !!float 2e-5,
+    lr: 0.00002,
     weight_decay: 0.0005,
     momentum: 0.98,
 
-    K: 13,
+    K: 17,
 
-    scale_factor: 0.4,
+    scale_factor: 0.45,
     default_img_size: !!python/tuple [1052, 1914],
 
-    lr_decay: False,
+    lr_decay: True,
     lr_decay_freq: 1,
     lr_decay_power: 0.9,
 
-    eval_freq: 1000,
+    eval_freq: 5000,
+    eval_samples: 25,
 
     resume: False,
-    resume_epoch: 1,
+    resume_epoch: 0,
 
     paths: {
         project_path: "/home/flixpar/VisDa",
         data_base_path: "/media/data/",
         data_train_path: "/media/data/train/",
-        data_val_path: "/media/data/train/eval",
         cityscapes_path: "/media/data/cityscapes/",
-        cityscapes_val_path: "/home/flixpar/eval/",
+        cityscapes_val_path: "/media/data/cityscapes_eval/",
         pretrained_models_path: "/media/data/pretrained/"
     },
 
     eval: {
-        version: 7,
-        epochs: 10,
-        samples: 10,
+        version: 1,
+        epochs: 12,
+        samples: 100,
         mode: "cityscapes_select",
         crf: False,
         save_pred: False,
-        per_image: True,
-    },
+        per_image: False,
+    }
 
 }

@@ -9,16 +9,16 @@ import torch
 import yaml
 from torch.utils import data
 
-PROCESSORS = 8
+import util.visda_helper as visda
 
-paths_file = os.path.join(os.getcwd(), "paths.yaml")
-paths = yaml.load(open(paths_file, 'r'))
+from util.setup import load_args
+args = load_args(os.getcwd())
+paths = args.paths 
 
 root_dir = paths["data_train_path"]
 sys.path.append(paths["project_path"])
 
-import util.visda_helper as visda
-
+PROCESSORS = 8
 
 class VisDaDataset(data.Dataset):
 

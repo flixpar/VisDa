@@ -4,7 +4,7 @@ np.seterr(divide='ignore', invalid='ignore')
 from util.metrics import calc_miou, calc_class_iou, confusion_matrix
 
 
-def Scorer:
+class Scorer:
 
 	def __init__(self, selected_metrics, num_classes):
 
@@ -29,10 +29,10 @@ def Scorer:
 		
 		if self.use_miou:
 			iter_miou = np.nanmean(iter_cls_iou)
-			self.miou.append(iter_img_miou)
+			self.miou.append(iter_miou)
 
 		if self.use_clsiou:
-			iter_cls_iou = np.nan_to_num(iter_cls_iou)
+			# iter_cls_iou = np.nan_to_num(iter_cls_iou)
 			self.cls_iou.append(iter_cls_iou)
 
 		if self.use_cfm:
@@ -76,6 +76,8 @@ def Scorer:
 
 	def latest_to_string(self):
 
+		out = ""
+
 		if self.use_miou:
 			out += "mIOU: {}\n".format(self.miou[-1])
 
@@ -96,7 +98,8 @@ def Scorer:
 			res.append((meaniou, stdeviou))
 
 		if self.use_clsiou:
-			total_clsiou = np.mean(self.cls_iou, axis=0)
+			total_clsiou = np.nan_to_num(self.cls_iou.copy())
+			total_clsiou = np.mean(total_clsiou, axis=0)
 			res.append(total_clsiou)
 
 		if self.use_cfm:

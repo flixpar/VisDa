@@ -21,8 +21,8 @@ class Logger:
 
 		# create new save folder
 		if not args.resume:
-			assert not os.path.exists(os.path.join(paths["project_path"], "saves"))
-			os.mkdir(os.path.join(paths["project_path"], "saves"))
+			assert not os.path.exists(self.save_folder)
+			os.mkdir(self.save_folder)
 
 		# open file for logging to
 		self.logfile = open(os.path.join(self.save_folder, "train.log"), 'w')
@@ -45,13 +45,13 @@ class Logger:
 		tqdm.write("Eval mIOU: {}\n".format(iou))
 		self.logfile.write("Eval mIOU: {}\n\n".format(iou))
 
-	def log_iter(self, it, loss):
+	def log_iter(self, it, model, loss):
 
 		img_num = (it+1) * self.args.batch_size
 
 		if img_num % 1000 < self.args.batch_size:
 			tqdm.write("loss: {}".format(loss.data[0]))
-			logfile.write(str(loss.data[0])+"\n")
+			self.logfile.write(str(loss.data[0])+"\n")
 
 		if img_num % self.args.eval_freq < self.args.batch_size:
 			iou = self.evaluator.eval(model)

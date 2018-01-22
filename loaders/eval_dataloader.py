@@ -7,6 +7,7 @@ class EvalDataloader(data.Dataset):
 
 		self.dataset = dataset
 		self.num_samples = samples
+		self.img_size = self.dataset.img_size
 
 		self.chosen = random.sample(range(len(self.dataset)), self.num_samples)
 

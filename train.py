@@ -16,8 +16,7 @@ from models.gcn import GCN
 from models.unet import UNet
 
 from loaders.visda import VisDaDataset
-from loaders.cityscapes import CityscapesDataset
-from loaders.eval_dataloader import EvalDataloader
+from loaders.cityscapes_select import CityscapesSelectDataset
 
 from eval import Evaluator
 
@@ -34,8 +33,8 @@ dataset = VisDaDataset(im_size=args.img_size)
 dataloader = data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=8)
 
 # setup evaluator
-evaldataset = EvalDataloader(CityscapesDataset(im_size=args.img_size), self.n_samples)
-evaluator = Evaluator(evaldataset, samples=25, metrics=["miou"], crf=False):
+evaldataset = CityscapesSelectDataset(im_size=args.img_size, n_samples=args.eval_samples)
+evaluator = Evaluator(evaldataset, samples=25, metrics=["miou"], crf=False)
 
 # setup model
 if args.model=="GCN":
@@ -80,7 +79,7 @@ def main():
 			loss.backward()
 			optimizer.step()
 
-			logger.log_iter(i, loss)
+			logger.log_iter(i, model, loss)
 
 		logger.log_epoch(epoch, model)
 

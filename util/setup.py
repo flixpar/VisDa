@@ -3,6 +3,8 @@ from torch import nn
 from torch import optim
 
 import numpy as np
+import yaml
+import os
 
 from util.util import Namespace
 
@@ -21,8 +23,9 @@ class PolyLRScheduler:
 		self.lr_decay_iter = lr_decay_iter
 		self.max_iter = max_iter
 		self.decay_power = power
+		self.enable = enable
 
-	def step(it):
+	def step(self, it):
 		if not self.enable:
 			return
 
@@ -35,7 +38,7 @@ class PolyLRScheduler:
 
 def load_args(base_path):
 	args = Namespace(**yaml.load(open(os.path.join(base_path, "config.yaml"), 'r')))
-	args.img_size = tuple((np.asarray(args.default_img_size) * args.scale_factor).astype(np.int))
+	args.img_size = (int(args.scale_factor*args.default_img_size[0]), int(args.scale_factor*args.default_img_size[1]))
 	return args
 
 def setup_optimizer(model, args):

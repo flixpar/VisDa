@@ -47,7 +47,7 @@ class Evaluator:
 	def eval(self, model):
 		model.eval()
 
-		scores = Scorer(self.metrics)
+		scores = Scorer(self.metrics, self.dataset.num_classes)
 
 		loader = self.dataloader
 		if self.standalone: loader = tqdm(loader, total=self.n_samples)
@@ -56,10 +56,9 @@ class Evaluator:
 			l = list(l)
 
 			# unpack values from loader
-			image 		= l[0]
-			image_full 	= l[2]
-			gt 			= l[3]
-			name 		= l[4] if len(l)>4 else None
+			image, _	= l[0]
+			image_full, gt	= l[1]
+			name		= l[2][0] if len(l)>2 else None
 
 			# convert inputs as needed
 			image_full = np.squeeze(image_full.cpu().numpy())
@@ -82,11 +81,11 @@ class Evaluator:
 
 			# display metrics
 			if self.standalone and self.per_image:
-				self.display_latest(name)
+				self.display_latest(i, name, scores)
 
 			# save output images
 			if self.save_pred:
-				path = os.path.join(paths["project_path"], "pred")
+				path = os.path.join(os.getcwd(), "pred")
 				if self.use_crf:
 					save_set(image_full, gt, alt, pred, i+1, path)
 				else:
@@ -150,10 +149,11 @@ class Evaluator:
 
 if __name__ == "__main__":
 
-	args = load_args(os.getcwd())
+	version = 9
+	args = load_args(os.path.join(os.getcwd(), "saves{}".format(version)))
 
 	trained_epochs = args.eval["epochs"]
-	save_path = os.path.join(paths["project_path"], "saves{}".format(args.eval["version"]), "{}-{}.pth".format(args.model, trained_epochs))
+	save_path = os.path.join(args.paths["project_path"], "saves{}".format(args.eval["version"]), "{}-{}.pth".format(args.model, trained_epochs))
 
 	print()
 	print("size:\t{}".format(args.img_size))
@@ -167,7 +167,7 @@ if __name__ == "__main__":
 	print("used CRF:\t{}".format(args.eval["crf"]))
 	print()
 
-	dataset = CityscapesSelectDataset(im_size=img_size, n_samples=self.n_samples)
+	dataset = CityscapesSelectDataset(im_size=args.img_size, n_samples=args.eval["samples"])
 
 	if args.model=="GCN": model = GCN(cityscapes.num_classes, args.img_size, k=args.K).cuda()
 	elif args.model=="UNet": model = UNet(cityscapes.num_classes).cuda()
@@ -176,7 +176,7 @@ if __name__ == "__main__":
 
 	start = time.time()
 
-	evaluator = Evaluator(dataset, mode=args.eval["mode"], samples=args.eval["samples"], crf=args.eval["crf"],
+	evaluator = Evaluator(dataset, samples=args.eval["samples"], crf=args.eval["crf"],
 		metrics=["miou","cls_iou","classmatch"], standalone=True, save_pred=args.eval["save_pred"], per_image=args.eval["per_image"])
 	iou, cls_iou, matches = evaluator.eval(model)
 

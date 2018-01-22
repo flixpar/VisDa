@@ -6,10 +6,9 @@ import os
 from math import floor
 import yaml
 
-paths_file = os.path.join(os.getcwd(), "paths.yaml")
-paths = yaml.load(open(paths_file, 'r'))
-
-pretrained_dir = paths["pretrained_models_path"]
+from util.setup import load_args
+args = load_args(os.getcwd())
+pretrained_dir = args.paths["pretrained_models_path"]
 
 
 class _GlobalConvModule(nn.Module):
