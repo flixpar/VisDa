@@ -21,8 +21,8 @@
     eval_freq: 5000,
     eval_samples: 25,
 
-    resume: False,
-    resume_epoch: 0,
+    resume: True,
+    resume_epoch: 2,
 
     paths: {
         project_path: "/home/flixpar/VisDa",
@@ -31,16 +31,6 @@
         cityscapes_path: "/media/data/cityscapes/",
         cityscapes_val_path: "/media/data/cityscapes_eval/",
         pretrained_models_path: "/media/data/pretrained/"
-    },
-
-    eval: {
-        version: 1,
-        epochs: 12,
-        samples: 100,
-        mode: "cityscapes_select",
-        crf: False,
-        save_pred: False,
-        per_image: False,
     }
 
 }

@@ -37,8 +37,15 @@ class PolyLRScheduler:
 			param_group['lr'] = lr
 
 def load_args(base_path):
-	args = Namespace(**yaml.load(open(os.path.join(base_path, "config.yaml"), 'r')))
+
+	config_file = open(os.path.join(base_path, "config.yaml"), 'r')
+	eval_file = open(os.path.join(base_path, "eval.yaml"), 'r')
+
+	args = Namespace(**yaml.load(config_file))
+	args.eval = yaml.load(eval_file)
+
 	args.img_size = (int(args.scale_factor*args.default_img_size[0]), int(args.scale_factor*args.default_img_size[1]))
+
 	return args
 
 def setup_optimizer(model, args):
@@ -51,6 +58,6 @@ def setup_optimizer(model, args):
 	return optimizer
 
 def load_save(model, args):
-	assert os.path.exists(os.path.join(paths["project_path"], "saves"))
-	resume_path = save_path.format(args.resume_epoch)
+	assert os.path.exists(os.path.join(args.paths["project_path"], "saves"))
+	resume_path = os.path.join(args.paths["project_path"], "saves", "{}-{}.pth".format(args.model, args.resume_epoch))
 	model.load_state_dict(torch.load(resume_path))
