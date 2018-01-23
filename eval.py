@@ -149,8 +149,8 @@ class Evaluator:
 
 if __name__ == "__main__":
 
-	version = 9
-	args = load_args(os.path.join(os.getcwd(), "saves{}".format(version)))
+	version = yaml.load(open("eval.yaml",'r'))["version"]
+	args = load_args(os.path.join(os.getcwd(), "saves{}".format(version)), eval_path=os.getcwd())
 
 	trained_epochs = args.eval["epochs"]
 	save_path = os.path.join(args.paths["project_path"], "saves{}".format(args.eval["version"]), "{}-{}.pth".format(args.model, trained_epochs))

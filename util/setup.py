@@ -36,10 +36,14 @@ class PolyLRScheduler:
 		for param_group in self.optimizer.param_groups:
 			param_group['lr'] = lr
 
-def load_args(base_path):
+def load_args(base_path, eval_path=None):
 
 	config_file = open(os.path.join(base_path, "config.yaml"), 'r')
-	eval_file = open(os.path.join(base_path, "eval.yaml"), 'r')
+
+	if eval_path is not None:
+		eval_file = open(os.path.join(eval_path, "eval.yaml"), 'r')
+	else:
+		eval_file = open(os.path.join(base_path, "eval.yaml"), 'r')
 
 	args = Namespace(**yaml.load(config_file))
 	args.eval = yaml.load(eval_file)
