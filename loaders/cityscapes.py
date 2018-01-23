@@ -7,6 +7,10 @@ import torch
 import cv2
 from torch.utils import data
 from skimage.exposure import equalize_adapthist, rescale_intensity
+import skimage
+
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning)
 
 from util.setup import load_args
 args = load_args(os.getcwd())
@@ -79,8 +83,8 @@ class CityscapesDataset(data.Dataset):
 		return (img, lbl)
 
 	def enhance_contrast(self, img):
-		img = img[...,::-1]
+		img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 		img = equalize_adapthist(img)
-		img = rescale_intensity(img, out_range=(0, 255)).astype(np.uint8)
-		img = img[...,::-1]
+		img = rescale_intensity(img, out_range='uint8').astype(np.uint8)
+		img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 		return img
