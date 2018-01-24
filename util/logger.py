@@ -14,6 +14,7 @@ class Logger:
 		# setup
 		self.args = args
 		self.evaluator = evaluator
+		self.iterations = 0
 
 		# create base save paths
 		self.save_folder = os.path.join(args.paths["project_path"], "saves")
@@ -43,20 +44,21 @@ class Logger:
 
 		iou = self.evaluator.eval(model)
 		tqdm.write("Eval mIOU: {}\n".format(iou))
-		self.logfile.write("Eval mIOU: {}\n\n".format(iou))
+		self.logfile.write("it: {}, miou: {}\n".format(self.iterations, iou))
 
 	def log_iter(self, it, model, loss):
 
+		self.iterations += self.args.batch_size
 		img_num = (it+1) * self.args.batch_size
 
 		if img_num % 1000 < self.args.batch_size:
 			tqdm.write("loss: {}".format(loss.data[0]))
-			self.logfile.write(str(loss.data[0])+"\n")
+			self.logfile.write("it: {}, loss: {}\n".format(self.iterations, loss.data[0]))
 
 		if img_num % self.args.eval_freq < self.args.batch_size:
 			iou = self.evaluator.eval(model)
 			tqdm.write("Eval mIOU: {}".format(iou))
-			self.logfile.write("Eval mIOU: {}\n".format(iou))
+			self.logfile.write("it: {}, miou: {}\n".format(self.iterations, iou))
 
 	def save_final(self, model):
 		torch.save(model.state_dict(), self.save_path.format("final"))
