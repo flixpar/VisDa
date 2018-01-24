@@ -18,6 +18,7 @@ np.seterr(divide='ignore', invalid='ignore')
 from models.gcn import GCN
 from models.unet import UNet
 from models.gcn_densenet import GCN_DENSENET
+from models.gcn_deconv import GCN_DECONV
 
 from loaders.visda import VisDaDataset
 from loaders.cityscapes import CityscapesDataset
@@ -173,6 +174,7 @@ if __name__ == "__main__":
 	if args.model=="GCN": model = GCN(cityscapes.num_classes, args.img_size, k=args.K).cuda()
 	elif args.model=="UNet": model = UNet(cityscapes.num_classes).cuda()
 	elif args.model=="GCN_DENSENET": model = GCN_DENSENET(cityscapes.num_classes, args.img_size, k=args.K).cuda()
+	if args.model=="GCN_DECONV": model = GCN_DECONV(cityscapes.num_classes, args.img_size, k=args.K).cuda()
 	else: raise ValueError("Invalid model arg.")
 	model.load_state_dict(torch.load(save_path))
 
