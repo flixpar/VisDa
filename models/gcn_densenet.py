@@ -47,7 +47,7 @@ class _BoundaryRefineModule(nn.Module):
 		return out
 
 
-class GCN(nn.Module):
+class GCN_DENSENET(nn.Module):
 	def __init__(self, num_classes, input_size, k=7):
 		super(GCN, self).__init__()
 

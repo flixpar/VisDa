@@ -1,7 +1,9 @@
+{
 version: 1,
 epochs: 12,
 samples: 100,
 mode: "cityscapes_select",
 crf: False,
 save_pred: False,
-per_image: False,
+per_image: False
+}

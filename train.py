@@ -14,6 +14,7 @@ np.seterr(divide='ignore', invalid='ignore')
 
 from models.gcn import GCN
 from models.unet import UNet
+from models.gcn_densenet import GCN_DENSENET
 
 from loaders.visda import VisDaDataset
 from loaders.cityscapes_select import CityscapesSelectDataset
@@ -41,6 +42,8 @@ if args.model=="GCN":
 	model = GCN(dataset.num_classes, dataset.img_size, k=args.K).cuda()
 elif args.model=="UNet":
 	model = UNet(dataset.num_classes).cuda()
+elif args.model=="GCN_DENSENET":
+	model = GCN_DENSENET(dataset.num_classes, dataset.img_size, k=args.K).cuda()
 else: raise ValueError("Invalid model arg.")
 model.train()
 

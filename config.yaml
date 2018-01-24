@@ -1,9 +1,9 @@
 {
-    model: "GCN",
+    model: "GCN_DENSENET",
     optimizer: "SGD",
 
     max_epochs: 12,
-    batch_size: 6,
+    batch_size: 8,
 
     lr: 0.00002,
     weight_decay: 0.0005,
@@ -21,8 +21,8 @@
     eval_freq: 5000,
     eval_samples: 25,
 
-    resume: True,
-    resume_epoch: 2,
+    resume: False,
+    resume_epoch: 0,
 
     paths: {
         project_path: "/home/flixpar/VisDa",
