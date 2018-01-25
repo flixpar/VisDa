@@ -47,43 +47,26 @@ class _BoundaryRefineModule(nn.Module):
 		return out
 
 class _PyramidSpatialPoolingModule(nn.Module):
-	def __init__(self, in_channels, down_channels, out_size):
+	def __init__(self, in_channels, down_channels, out_size, levels=(1, 2, 3, 6)):
 
-		self.out_channels = 4 * down_channels
+		self.out_channels = len(levels) * down_channels
 
-		self.pool1 = nn.AdaptiveAvgPool2d(1)
-		self.pool2 = nn.AdaptiveAvgPool2d(2)
-		self.pool3 = nn.AdaptiveAvgPool2d(3)
-		self.pool6 = nn.AdaptiveAvgPool2d(6)
-
-		self.conv1 = nn.Conv2d(in_channels, down_channels, kernel_size=1, padding=0, bias=False)
-		self.conv2 = nn.Conv2d(in_channels, down_channels, kernel_size=1, padding=0, bias=False)
-		self.conv3 = nn.Conv2d(in_channels, down_channels, kernel_size=1, padding=0, bias=False)
-		self.conv6 = nn.Conv2d(in_channels, down_channels, kernel_size=1, padding=0, bias=False)
-
-		self.up1 = nn.Upsample(size=out_size, mode='bilinear')
-		self.up2 = nn.Upsample(size=out_size, mode='bilinear')
-		self.up3 = nn.Upsample(size=out_size, mode='bilinear')
-		self.up6 = nn.Upsample(size=out_size, mode='bilinear')
+		self.layers = []
+		for level in levels:
+			layer = nn.Sequential(
+				nn.AdaptiveAvgPool2d(level),
+				nn.Conv2d(in_channels, down_channels, kernel_size=1, padding=0, bias=False),
+				nn.BatchNorm2d(down_channels),
+				nn.ReLU(inplace=True),
+				nn.Upsample(size=out_size, mode='bilinear')
+			)
+			self.layers.append(layer)
 
 	def forward(self, x):
 		
-		l1 = self.pool1(x)
-		l2 = self.pool2(x)
-		l3 = self.pool3(x)
-		l6 = self.pool6(x)
-
-		l1 = self.conv1(l1)
-		l2 = self.conv2(l2)
-		l3 = self.conv3(l3)
-		l6 = self.conv6(l6)
-
-		l1 = self.up1(l1)
-		l2 = self.up2(l2)
-		l3 = self.up3(l3)
-		l6 = self.up6(l6)
-
-		out = torch.cat([l1, l2, l3, l6], 1)
+		features = [layer(x) for layer in self.layers]
+		out = torch.cat(features, 1)
+		
 		return out
 
 class GCN(nn.Module):
