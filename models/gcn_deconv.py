@@ -60,7 +60,7 @@ class _Upsample(nn.Module):
 
 class GCN_DECONV(nn.Module):
 	def __init__(self, num_classes, input_size, k=7):
-		super(GCN, self).__init__()
+		super(GCN_DECONV, self).__init__()
 
 		self.K = k
 		self.input_size = input_size
@@ -92,11 +92,11 @@ class GCN_DECONV(nn.Module):
 		self.brm8 = _BoundaryRefineModule(num_classes)
 		self.brm9 = _BoundaryRefineModule(num_classes)
 
-		self.up1 = nn.ConvTranspose2d(num_classes, num_classes, 3, stride=2, padding=1)
-		self.up2 = nn.ConvTranspose2d(num_classes, num_classes, 3, stride=2, padding=1)
-		self.up3 = nn.ConvTranspose2d(num_classes, num_classes, 3, stride=2, padding=1)
-		self.up4 = nn.ConvTranspose2d(num_classes, num_classes, 3, stride=2, padding=1)
-		self.up5 = nn.ConvTranspose2d(num_classes, num_classes, 3, stride=2, padding=1)
+		self.up1 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
+		self.up2 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
+		self.up3 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
+		self.up4 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
+		self.up5 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
 
 		initialize_weights(self.gcm1, self.gcm2, self.gcm3, self.gcm4, self.brm1, self.brm2, self.brm3,
 					self.brm4, self.brm5, self.brm6, self.brm7, self.brm8, self.brm9,
@@ -140,5 +140,6 @@ def initialize_weights(*models):
 				module.weight.data.fill_(1)
 				module.bias.data.zero_()
 			elif isinstance(module, nn.ConvTranspose2d):
-				module.weight.data.fill_(1)
-				module.biad.data.zero_()
+				nn.init.kaiming_normal(module.weight)
+				if module.bias is not None:
+					module.bias.data.zero_()

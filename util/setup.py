@@ -48,7 +48,15 @@ def load_args(base_path, eval_path=None):
 	args = Namespace(**yaml.load(config_file))
 	args.eval = yaml.load(eval_file)
 
-	args.img_size = (int(args.scale_factor*args.default_img_size[0]), int(args.scale_factor*args.default_img_size[1]))
+	# args.img_size = (int(args.scale_factor*args.default_img_size[0]), int(args.scale_factor*args.default_img_size[1]))
+
+	height = args.scale_factor * args.default_img_size[0]
+	width  = args.scale_factor * args.default_img_size[1]
+	
+	height = round(height / 16) * 16
+	width  = round(width  / 16) * 16
+	
+	args.img_size = (int(height), int(width))
 
 	return args
 
