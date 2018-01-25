@@ -49,7 +49,7 @@ class _BoundaryRefineModule(nn.Module):
 
 class GCN_DENSENET(nn.Module):
 	def __init__(self, num_classes, input_size, k=7):
-		super(GCN, self).__init__()
+		super(GCN_DENSENET, self).__init__()
 
 		self.K = k
 		self.input_size = input_size
@@ -85,10 +85,10 @@ class GCN_DENSENET(nn.Module):
 			densenet.features.denseblock4,
 		)
 
-		self.gcm1 = _GlobalConvModule(2048, num_classes, (self.K, self.K))
-		self.gcm2 = _GlobalConvModule(1024, num_classes, (self.K, self.K))
-		self.gcm3 = _GlobalConvModule(512, num_classes, (self.K, self.K))
-		self.gcm4 = _GlobalConvModule(256, num_classes, (self.K, self.K))
+		self.gcm1 = _GlobalConvModule(2208, num_classes, (self.K, self.K))
+		self.gcm2 = _GlobalConvModule(2112, num_classes, (self.K, self.K))
+		self.gcm3 = _GlobalConvModule(768, num_classes, (self.K, self.K))
+		self.gcm4 = _GlobalConvModule(384, num_classes, (self.K, self.K))
 
 		self.brm1 = _BoundaryRefineModule(num_classes)
 		self.brm2 = _BoundaryRefineModule(num_classes)
