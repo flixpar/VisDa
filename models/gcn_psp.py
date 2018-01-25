@@ -66,12 +66,12 @@ class _PyramidSpatialPoolingModule(nn.Module):
 		
 		features = [layer(x) for layer in self.layers]
 		out = torch.cat(features, 1)
-		
+
 		return out
 
-class GCN(nn.Module):
+class GCN_PSP(nn.Module):
 	def __init__(self, num_classes, input_size, k=7):
-		super(GCN, self).__init__()
+		super(GCN_PSP, self).__init__()
 
 		self.K = k
 		self.input_size = input_size
