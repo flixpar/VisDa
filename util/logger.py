@@ -36,10 +36,14 @@ class Logger:
 		self.args.print_dict()
 		print()
 
-	def log_epoch(self, epoch, model):
+	def log_epoch(self, epoch, model, lr):
 
 		print("Epoch {} completed.".format(epoch + 1))
 		self.logfile.write("Epoch {} completed.\n".format(epoch + 1))
+
+		print("Epoch LR: {}".format(lr))
+		self.logfile.write("Epoch {} LR: {}\n".format(epoch+1, lr))
+
 		torch.save(model.state_dict(), self.save_path.format(epoch + 1))
 
 		iou = self.evaluator.eval(model)

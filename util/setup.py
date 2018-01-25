@@ -24,6 +24,7 @@ class PolyLRScheduler:
 		self.max_iter = max_iter
 		self.decay_power = power
 		self.enable = enable
+		self.lr = init_lr
 
 	def step(self, it):
 		if not self.enable:
@@ -32,9 +33,12 @@ class PolyLRScheduler:
 		if it % self.lr_decay_iter or it > self.max_iter:
 			return self.optimizer
 
-		lr = self.init_lr*(1 - it/self.max_iter)**self.decay_power
+		self.lr = self.init_lr*(1 - it/self.max_iter)**self.decay_power
 		for param_group in self.optimizer.param_groups:
-			param_group['lr'] = lr
+			param_group['lr'] = self.lr
+
+	def get_lr(self):
+		return self.lr
 
 def load_args(base_path, eval_path=None):
 

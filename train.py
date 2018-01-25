@@ -87,7 +87,7 @@ def main():
 
 			logger.log_iter(i, model, loss)
 
-		logger.log_epoch(epoch, model)
+		logger.log_epoch(epoch, model, scheduler.get_lr())
 
 	logger.save_final(model)
 
