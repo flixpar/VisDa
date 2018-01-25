@@ -19,7 +19,7 @@ paths = args.paths
 root_dir = paths["data_train_path"]
 
 
-class VisDaDataset(data.Dataset):
+class GTA5Dataset(data.Dataset):
 
 	def __init__(self, im_size=visda.shape, mode="train"):
 		if mode == "train":
@@ -46,16 +46,17 @@ class VisDaDataset(data.Dataset):
 		img = Image.open(img_fn)
 		lbl = Image.open(lbl_fn)
 
-		img.resize(self.img_size, resample=Image.BICUBIC)
-		lbl.resize(self.img_size, resample=Image.NEAREST)
+		size = (self.img_size[1], self.img_size[0])
+		img = img.resize(size, resample=Image.BICUBIC)
+		lbl = lbl.resize(size, resample=Image.NEAREST)
 
-		img = np.asarray(img)
+		img = np.asarray(img, dtype=np.float32)
 		lbl = np.asarray(lbl)
 
 		lbl = transform_labels(lbl)
 
-		img = img - self.img_mean
-		img /= self.img_stdev
+		img -= np.flip(self.img_mean, 0)
+		img /= np.flip(self.img_stdev, 0)
 
 		img = torch.from_numpy(img).permute(2, 0, 1).type(torch.FloatTensor)
 		lbl = torch.from_numpy(lbl).type(torch.LongTensor)
