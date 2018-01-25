@@ -46,16 +46,23 @@ class _BoundaryRefineModule(nn.Module):
 		out = x + residual
 		return out
 
-class _Upsample(nn.Module):
-	def __init(self, in_channels, out_channels):
-		super(_Upsample, self).__init__()
-		self.deconv = nn.ConvTranspose2d(in_channels, out_channels, 3, stride=2, padding=1)
+class _UpsampleModule(nn.Module):
+	def __init(self, channels):
+		super(_UpsampleModule, self).__init__()
+		self.pre = nn.Sequential(
+			nn.Conv2d(channels, channels),
+			nn.BatchNorm2d(channels),
+			nn.ReLU(inplace=True)
+		)
+		self.deconv = nn.ConvTranspose2d(channels, channels, 2, stride=2, padding=1)
 		self.upsample = nn.Upsample(scale_factor=2, mode="bilinear")
 
 	def forward(self, x):
-		de = self.deconv(x)
+		p = self.pre(x)
+		de = self.deconv(p)
 		up = self.upsample(x)
-		out = torch.cat([de, up], 1)
+		# out = torch.cat([de, up], 1)
+		out = de + up
 		return out
 
 class GCN_DECONV(nn.Module):
@@ -98,9 +105,16 @@ class GCN_DECONV(nn.Module):
 		self.up4 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
 		self.up5 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
 
+		self.deconv1 = _UpsampleModule(num_classes)
+		self.deconv2 = _UpsampleModule(num_classes)
+		self.deconv3 = _UpsampleModule(num_classes)
+		self.deconv4 = _UpsampleModule(num_classes)
+		self.deconv5 = _UpsampleModule(num_classes)
+
 		initialize_weights(self.gcm1, self.gcm2, self.gcm3, self.gcm4, self.brm1, self.brm2, self.brm3,
 					self.brm4, self.brm5, self.brm6, self.brm7, self.brm8, self.brm9,
 					self.up1, self.up2, self.up3, self.up4, self.up5)
+					# self.deconv1, self.deconv2, self.deconv3, self.deconv4, self.deconv5)
 
 	def forward(self, x):
 		fm0 = self.layer0(x)
@@ -119,6 +133,12 @@ class GCN_DECONV(nn.Module):
 		# fs3 = self.brm7(F.upsample(fs2, fm1.size()[2:], mode='bilinear') + gcfm4)
 		# fs4 = self.brm8(F.upsample(fs3, fm0.size()[2:], mode='bilinear'))
 		# out = self.brm9(F.upsample(fs4, self.input_size, mode='bilinear'))
+
+		# fs1 = self.brm5(self.deconv1(gcfm1) + gcfm2)
+		# fs2 = self.brm6(self.deconv2(fs1) + gcfm3)
+		# fs3 = self.brm7(self.deconv3(fs2) + gcfm4)
+		# fs4 = self.brm8(self.deconv4(fs3))
+		# out = self.brm9(self.deconv5(fs4))
 
 		fs1 = self.brm5(self.up1(gcfm1) + gcfm2)
 		fs2 = self.brm6(self.up2(fs1) + gcfm3)
