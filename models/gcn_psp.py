@@ -48,10 +48,11 @@ class _BoundaryRefineModule(nn.Module):
 
 class _PyramidSpatialPoolingModule(nn.Module):
 	def __init__(self, in_channels, down_channels, out_size, levels=(1, 2, 3, 6)):
+		super(_PyramidSpatialPoolingModule, self).__init__()
 
 		self.out_channels = len(levels) * down_channels
 
-		self.layers = []
+		self.layers = nn.ModuleList()
 		for level in levels:
 			layer = nn.Sequential(
 				nn.AdaptiveAvgPool2d(level),
