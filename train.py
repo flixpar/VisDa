@@ -62,7 +62,7 @@ if args.resume:
 
 # setup loss and optimizer
 optimizer = setup.init_optimizer(model, args)
-scheduler = setup.LRScheduler(optimizer, args)
+scheduler = setup.LRScheduler(optimizer, evaluator, args)
 loss_func = CrossEntropyLoss2d(weight=dataset.class_weights).cuda()
 
 # setup logging

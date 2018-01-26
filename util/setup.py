@@ -101,6 +101,9 @@ class LRScheduler:
 		if self.args.scheduler == "exponential":
 			self.scheduler.step()
 
+	def get_lr(self):
+		return self.optimizer.param_groups[0]['lr']
+
 def load_save(model, args):
 	assert os.path.exists(os.path.join(args.paths["project_path"], "saves"))
 	resume_path = os.path.join(args.paths["project_path"], "saves", "{}-{}.pth".format(args.model, args.resume_epoch))
