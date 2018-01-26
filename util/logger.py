@@ -57,6 +57,8 @@ class Logger:
 
 		if img_num % 1000 < self.args.batch_size:
 			tqdm.write("loss: {}".format(loss.data[0]))
+			
+		if img_num % 100 < self.args.batch_size:
 			self.logfile.write("it: {}, loss: {}\n".format(self.iterations, loss.data[0]))
 
 		if img_num % self.args.eval_freq < self.args.batch_size:
