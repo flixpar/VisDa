@@ -64,7 +64,7 @@ def load_args(base_path, eval_path=None):
 
 	return args
 
-def setup_optimizer(model, args):
+def init_optimizer(model, args):
 	if args.optimizer == "SGD":
 		optimizer = optim.SGD(model.parameters(), lr=args.lr, momentum=args.momentum, weight_decay=args.weight_decay, nesterov=True)
 	elif args.optimizer == "Adam":
@@ -72,6 +72,34 @@ def setup_optimizer(model, args):
 	else:
 		raise ValueError("Invalid optimizer arg.")
 	return optimizer
+
+class LRScheduler:
+	def __init__(self, optimizer, evaluator, args):
+		self.optimizer = optimizer
+		self.evaluator = evaluator
+		self.args = args
+
+		if args.scheduler == "poly":
+			self.scheduler = PolyLRScheduler(optimizer, args.lr, enable=args.lr_decay, lr_decay_iter=args.lr_decay_freq, max_iter=args.max_epochs, power=args.lr_decay_power)
+		elif args.scheduler == "plateau":
+			self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode="max", factor=0.2, patience=1, verbose=True)
+		elif args.scheduler == "step":
+			self.scheduler = optim.lr_scheduler.StepLR(optimizer, step_size=2, gamma=0.1)
+		elif args.scheduler == "exponential":
+			self.scheduler = optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.2)
+		else:
+			raise ValueError("Invalid scheduler option.")
+
+	def step(self, it):
+		if self.args.scheduler == "poly":
+			self.scheduler.step(it)
+		if self.args.scheduler == "plateau":
+			acc = self.evaluator.eval()
+			self.scheduler.step(acc)
+		if self.args.scheduler == "step":
+			self.scheduler.step()
+		if self.args.scheduler == "exponential":
+			self.scheduler.step()
 
 def load_save(model, args):
 	assert os.path.exists(os.path.join(args.paths["project_path"], "saves"))

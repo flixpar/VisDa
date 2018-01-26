@@ -25,11 +25,11 @@ from eval import Evaluator
 
 from util.loss import CrossEntropyLoss2d
 from util.util import Namespace
-from util.setup import *
 from util.logger import Logger
+from util import setup
 
 # load config
-args = load_args(os.getcwd())
+args = setup.load_args(os.getcwd())
 
 # data loading
 dataset = VisDaDataset(im_size=args.img_size)
@@ -57,12 +57,12 @@ model.train()
 # resume previous training attempt
 start_epoch = 0
 if args.resume:
-	load_save(model, args)
+	setup.load_save(model, args)
 	start_epoch = args.resume_epoch
 
 # setup loss and optimizer
-optimizer = setup_optimizer(model, args)
-scheduler = PolyLRScheduler(optimizer, args.lr, enable=args.lr_decay, lr_decay_iter=args.lr_decay_freq, max_iter=args.max_epochs, power=args.lr_decay_power)
+optimizer = setup.init_optimizer(model, args)
+scheduler = setup.LRScheduler(optimizer, args)
 loss_func = CrossEntropyLoss2d(weight=dataset.class_weights).cuda()
 
 # setup logging
