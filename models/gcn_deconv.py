@@ -47,22 +47,55 @@ class _BoundaryRefineModule(nn.Module):
 		return out
 
 class _UpsampleModule(nn.Module):
-	def __init(self, channels):
+	def __init__(self, channels):
 		super(_UpsampleModule, self).__init__()
 		self.pre = nn.Sequential(
-			nn.Conv2d(channels, channels),
+			nn.Conv2d(channels, channels, kernel_size=3, padding=1),
 			nn.BatchNorm2d(channels),
 			nn.ReLU(inplace=True)
 		)
-		self.deconv = nn.ConvTranspose2d(channels, channels, 2, stride=2, padding=1)
+		self.deconv = nn.ConvTranspose2d(channels, channels, kernel_size=2, stride=2, padding=0)
 		self.upsample = nn.Upsample(scale_factor=2, mode="bilinear")
 
 	def forward(self, x):
 		p = self.pre(x)
 		de = self.deconv(p)
 		up = self.upsample(x)
-		# out = torch.cat([de, up], 1)
 		out = de + up
+		return out
+
+class _DeconvBilinearInitModule(nn.Module):
+	def __init__(self, channels):
+		super(_DeconvBilinearInitModule, self).__init__()
+		self.deconv = nn.ConvTranspose2d(channels, channels, 4, stride=2, padding=1)
+		self.init_deconv(self.deconv, channels)
+
+	def forward(self, x):
+		out = self.deconv(x)
+		return out
+
+	def init_deconv(self, module, channels):
+		og = np.ogrid[:4, :4]
+		weights = (1 - abs(og[0]-1.5) / 2) * (1 - abs(og[1]-1.5) / 2)
+		module.weight.data = torch.from_numpy(np.tile(weights, (channels, channels, 1, 1)))
+		module.bias.data.zero_()
+
+class _DeeperUpsampleModule(nn.Module):
+	def __init__(self, channels):
+		super(_DeeperUpsampleModule, self).__init__()
+		self.pre = nn.Sequential(
+			nn.Conv2d(channels, channels, kernel_size=3, padding=1),
+			nn.BatchNorm2d(channels),
+			nn.ReLU(inplace=True),
+			nn.Conv2d(channels, channels, kernel_size=3, padding=1),
+			nn.BatchNorm2d(channels),
+			nn.ReLU(inplace=True)
+		)
+		self.deconv = nn.ConvTranspose2d(channels, channels, kernel_size=4, stride=2, padding=1)
+
+	def forward(self, x):
+		p = self.pre(x)
+		out = self.deconv(p)
 		return out
 
 class GCN_DECONV(nn.Module):
@@ -99,22 +132,27 @@ class GCN_DECONV(nn.Module):
 		self.brm8 = _BoundaryRefineModule(num_classes)
 		self.brm9 = _BoundaryRefineModule(num_classes)
 
-		self.up1 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
-		self.up2 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
-		self.up3 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
-		self.up4 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
-		self.up5 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
+		# self.up1 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
+		# self.up2 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
+		# self.up3 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
+		# self.up4 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
+		# self.up5 = nn.ConvTranspose2d(num_classes, num_classes, 4, stride=2, padding=1)
 
-		self.deconv1 = _UpsampleModule(num_classes)
-		self.deconv2 = _UpsampleModule(num_classes)
-		self.deconv3 = _UpsampleModule(num_classes)
-		self.deconv4 = _UpsampleModule(num_classes)
-		self.deconv5 = _UpsampleModule(num_classes)
+		# self.deconv1 = _UpsampleModule(num_classes)
+		# self.deconv2 = _UpsampleModule(num_classes)
+		# self.deconv3 = _UpsampleModule(num_classes)
+		# self.deconv4 = _UpsampleModule(num_classes)
+		# self.deconv5 = _UpsampleModule(num_classes)
+
+		self.deconv1 = _DeconvBilinearInitModule(num_classes)
+		self.deconv2 = _DeconvBilinearInitModule(num_classes)
+		self.deconv3 = _DeconvBilinearInitModule(num_classes)
+		self.deconv4 = _DeconvBilinearInitModule(num_classes)
+		self.deconv5 = _DeconvBilinearInitModule(num_classes)
 
 		initialize_weights(self.gcm1, self.gcm2, self.gcm3, self.gcm4, self.brm1, self.brm2, self.brm3,
 					self.brm4, self.brm5, self.brm6, self.brm7, self.brm8, self.brm9,
-					self.up1, self.up2, self.up3, self.up4, self.up5)
-					# self.deconv1, self.deconv2, self.deconv3, self.deconv4, self.deconv5)
+					self.deconv1, self.deconv2, self.deconv3, self.deconv4, self.deconv5)
 
 	def forward(self, x):
 		fm0 = self.layer0(x)
@@ -128,23 +166,17 @@ class GCN_DECONV(nn.Module):
 		gcfm3 = self.brm3(self.gcm3(fm2))
 		gcfm4 = self.brm4(self.gcm4(fm1))
 
-		# fs1 = self.brm5(F.upsample(gcfm1, fm3.size()[2:], mode='bilinear') + gcfm2)
-		# fs2 = self.brm6(F.upsample(fs1, fm2.size()[2:], mode='bilinear') + gcfm3)
-		# fs3 = self.brm7(F.upsample(fs2, fm1.size()[2:], mode='bilinear') + gcfm4)
-		# fs4 = self.brm8(F.upsample(fs3, fm0.size()[2:], mode='bilinear'))
-		# out = self.brm9(F.upsample(fs4, self.input_size, mode='bilinear'))
+		# fs1 = self.brm5(self.up1(gcfm1) + gcfm2)
+		# fs2 = self.brm6(self.up2(fs1) + gcfm3)
+		# fs3 = self.brm7(self.up3(fs2) + gcfm4)
+		# fs4 = self.brm8(self.up4(fs3))
+		# out = self.brm9(self.up5(fs4))
 
-		# fs1 = self.brm5(self.deconv1(gcfm1) + gcfm2)
-		# fs2 = self.brm6(self.deconv2(fs1) + gcfm3)
-		# fs3 = self.brm7(self.deconv3(fs2) + gcfm4)
-		# fs4 = self.brm8(self.deconv4(fs3))
-		# out = self.brm9(self.deconv5(fs4))
-
-		fs1 = self.brm5(self.up1(gcfm1) + gcfm2)
-		fs2 = self.brm6(self.up2(fs1) + gcfm3)
-		fs3 = self.brm7(self.up3(fs2) + gcfm4)
-		fs4 = self.brm8(self.up4(fs3))
-		out = self.brm9(self.up5(fs4))
+		fs1 = self.brm5(self.deconv1(gcfm1) + gcfm2)
+		fs2 = self.brm6(self.deconv2(fs1) + gcfm3)
+		fs3 = self.brm7(self.deconv3(fs2) + gcfm4)
+		fs4 = self.brm8(self.deconv4(fs3))
+		out = self.brm9(self.deconv5(fs4))
 
 		return out
 
