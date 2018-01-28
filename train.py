@@ -17,6 +17,7 @@ from models.unet import UNet
 from models.gcn_densenet import GCN_DENSENET
 from models.gcn_deconv import GCN_DECONV
 from models.gcn_psp import GCN_PSP
+from models.gcn_comb import GCN_COMBINED
 
 from loaders.visda import VisDaDataset
 from loaders.cityscapes_select import CityscapesSelectDataset
@@ -50,6 +51,8 @@ elif args.model=="GCN_DECONV":
 	model = GCN_DECONV(dataset.num_classes, dataset.img_size, k=args.K).cuda()
 elif args.model=="GCN_PSP":
 	model = GCN_PSP(dataset.num_classes, dataset.img_size, k=args.K).cuda()
+elif args.model=="GCN_COMB":
+	model = GCN_COMBINED(dataset.num_classes, dataset.img_size, k=args.K).cuda()
 else:
 	raise ValueError("Invalid model arg.")
 model.train()

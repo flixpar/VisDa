@@ -88,9 +88,9 @@ class _PyramidSpatialPoolingModule(nn.Module):
 
 		return out
 
-class GCN_DENSENET(nn.Module):
+class GCN_COMBINED(nn.Module):
 	def __init__(self, num_classes, input_size, k=7):
-		super(GCN_DENSENET, self).__init__()
+		super(GCN_COMBINED, self).__init__()
 
 		self.K = k
 		self.input_size = input_size
