@@ -81,6 +81,31 @@ class _DeconvBilinearInitModule(nn.Module):
 		module.weight.data = torch.from_numpy(np.tile(weights, (channels, channels, 1, 1))).type(torch.FloatTensor)
 		module.bias.data.zero_()
 
+class _LearnedBilinearDeconvModule(nn.Module):
+	def __init__(self, channels):
+		super(_LearnedBilinearDeconvModule, self).__init__()
+		self.deconv = nn.ConvTranspose2d(channels, channels, kernel_size=4, stride=2, padding=1)
+		self.deconv.weight.data = self.make_bilinear_weights(4, channels)
+		self.deconv.bias.data.zero_()
+
+	def forward(self, x):
+		out = self.deconv(x)
+		return out
+
+	def make_bilinear_weights(self, size, num_channels):
+		factor = (size + 1) // 2
+		if size % 2 == 1:
+			center = factor - 1
+		else:
+			center = factor - 0.5
+		og = np.ogrid[:size, :size]
+		filt = (1 - abs(og[0] - center) / factor) * (1 - abs(og[1] - center) / factor)
+		filt = torch.from_numpy(filt)
+		w = torch.zeros(num_channels, num_channels, size, size)
+		for i in range(num_channels):
+			w[i, i] = filt
+		return w
+
 class _DeeperUpsampleModule(nn.Module):
 	def __init__(self, channels):
 		super(_DeeperUpsampleModule, self).__init__()
@@ -145,16 +170,22 @@ class GCN_DECONV(nn.Module):
 		# self.deconv4 = _UpsampleModule(num_classes)
 		# self.deconv5 = _UpsampleModule(num_classes)
 
-		self.deconv1 = _DeconvBilinearInitModule(num_classes)
-		self.deconv2 = _DeconvBilinearInitModule(num_classes)
-		self.deconv3 = _DeconvBilinearInitModule(num_classes)
-		self.deconv4 = _DeconvBilinearInitModule(num_classes)
-		self.deconv5 = _DeconvBilinearInitModule(num_classes)
+		# self.deconv1 = _DeconvBilinearInitModule(num_classes)
+		# self.deconv2 = _DeconvBilinearInitModule(num_classes)
+		# self.deconv3 = _DeconvBilinearInitModule(num_classes)
+		# self.deconv4 = _DeconvBilinearInitModule(num_classes)
+		# self.deconv5 = _DeconvBilinearInitModule(num_classes)
+
+		self.deconv1 = _LearnedBilinearDeconvModule(num_classes)
+		self.deconv2 = _LearnedBilinearDeconvModule(num_classes)
+		self.deconv3 = _LearnedBilinearDeconvModule(num_classes)
+		self.deconv4 = _LearnedBilinearDeconvModule(num_classes)
+		self.deconv5 = _LearnedBilinearDeconvModule(num_classes)
 
 		initialize_weights(self.gcm1, self.gcm2, self.gcm3, self.gcm4, self.brm1, self.brm2, self.brm3,
 					self.brm4, self.brm5, self.brm6, self.brm7, self.brm8, self.brm9)
 
-		initialize_weights(self.deconv1, self.deconv2, self.deconv3, self.deconv4, self.deconv5)
+		# initialize_weights(self.deconv1, self.deconv2, self.deconv3, self.deconv4, self.deconv5)
 
 	def forward(self, x):
 		fm0 = self.layer0(x)
