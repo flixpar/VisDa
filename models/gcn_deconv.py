@@ -5,6 +5,7 @@ from torchvision import models
 import os
 from math import floor
 import yaml
+import numpy as np
 
 from util.setup import load_args
 args = load_args(os.getcwd())
@@ -77,7 +78,7 @@ class _DeconvBilinearInitModule(nn.Module):
 	def init_deconv(self, module, channels):
 		og = np.ogrid[:4, :4]
 		weights = (1 - abs(og[0]-1.5) / 2) * (1 - abs(og[1]-1.5) / 2)
-		module.weight.data = torch.from_numpy(np.tile(weights, (channels, channels, 1, 1)))
+		module.weight.data = torch.from_numpy(np.tile(weights, (channels, channels, 1, 1))).type(torch.FloatTensor)
 		module.bias.data.zero_()
 
 class _DeeperUpsampleModule(nn.Module):
@@ -151,8 +152,9 @@ class GCN_DECONV(nn.Module):
 		self.deconv5 = _DeconvBilinearInitModule(num_classes)
 
 		initialize_weights(self.gcm1, self.gcm2, self.gcm3, self.gcm4, self.brm1, self.brm2, self.brm3,
-					self.brm4, self.brm5, self.brm6, self.brm7, self.brm8, self.brm9,
-					self.deconv1, self.deconv2, self.deconv3, self.deconv4, self.deconv5)
+					self.brm4, self.brm5, self.brm6, self.brm7, self.brm8, self.brm9)
+
+		initialize_weights(self.deconv1, self.deconv2, self.deconv3, self.deconv4, self.deconv5)
 
 	def forward(self, x):
 		fm0 = self.layer0(x)
