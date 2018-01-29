@@ -1,6 +1,9 @@
+import os
 import sys
 import argparse
-from experiments import *
+from util import setup
+
+from experiments import		basic
 
 def main(args):
 	config = setup.load_args(os.getcwd())
@@ -17,9 +20,9 @@ def parse_args():
 
 def get_experiment(name, config):
 	if name == "basic":
-		experiment = basic.Basic()
+		experiment = basic.Basic(config)
 	else:
-		raise ValueError("Invalid experiment.")
+		raise ValueError("Invalid experiment name.")
 
 	return experiment
 
