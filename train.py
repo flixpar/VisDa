@@ -21,6 +21,7 @@ from models.gcn_comb import GCN_COMBINED
 
 from loaders.visda import VisDaDataset
 from loaders.cityscapes_select import CityscapesSelectDataset
+from loaders.cityscapes import CityscapesDataset
 
 from eval import Evaluator
 
@@ -34,6 +35,7 @@ args = setup.load_args(os.getcwd())
 
 # data loading
 dataset = VisDaDataset(im_size=args.img_size)
+# dataset = CityscapesDataset(im_size=args.img_size, mode="train")
 dataloader = data.DataLoader(dataset, batch_size=args.batch_size, shuffle=True, num_workers=8)
 
 # setup evaluator
