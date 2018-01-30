@@ -31,7 +31,6 @@ class _GlobalConvModule(nn.Module):
 		x = x_l + x_r
 		return x
 
-
 class _BoundaryRefineModule(nn.Module):
 	def __init__(self, dim):
 		super(_BoundaryRefineModule, self).__init__()
@@ -64,22 +63,21 @@ class _UpsampleModule(nn.Module):
 		out = de + up
 		return out
 
-class _PyramidSpatialPoolingModule(nn.Module):
+class _PyramidPoolingModule(nn.Module):
 	def __init__(self, in_channels, down_channels, out_size, levels=(1, 2, 3, 6)):
-		super(_PyramidSpatialPoolingModule, self).__init__()
+		super(_PyramidPoolingModule, self).__init__()
 
 		self.out_channels = len(levels) * down_channels
 
 		self.layers = nn.ModuleList()
 		for level in levels:
-			layer = nn.Sequential(
+			self.layers.append(nn.Sequential(
 				nn.AdaptiveAvgPool2d(level),
 				nn.Conv2d(in_channels, down_channels, kernel_size=1, padding=0, bias=False),
 				nn.BatchNorm2d(down_channels),
 				nn.ReLU(inplace=True),
 				nn.Upsample(size=out_size, mode='bilinear')
-			)
-			self.layers.append(layer)
+			))
 
 	def forward(self, x):
 		
@@ -147,7 +145,7 @@ class GCN_COMBINED(nn.Module):
 		self.deconv4 = _UpsampleModule(num_classes)
 		self.deconv5 = _UpsampleModule(num_classes)
 
-		self.psp = _PyramidSpatialPoolingModule(num_classes, 7, input_size)
+		self.psp = _PyramidPoolingModule(num_classes, 10, input_size)
 		self.final = nn.Sequential(
 			nn.Conv2d(num_classes + self.psp.out_channels, num_classes, kernel_size=3, padding=1),
 			nn.BatchNorm2d(num_classes),
