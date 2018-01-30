@@ -5,6 +5,8 @@ from torchvision import models
 import os
 from math import floor
 import yaml
+import tqdm
+import numpy as np
 
 from util.setup import load_args
 args = load_args(os.getcwd())
@@ -30,7 +32,6 @@ class _GlobalConvModule(nn.Module):
 		x_r = self.conv_r2(x_r)
 		x = x_l + x_r
 		return x
-
 
 class _BoundaryRefineModule(nn.Module):
 	def __init__(self, dim):
@@ -64,22 +65,21 @@ class _UpsampleModule(nn.Module):
 		out = de + up
 		return out
 
-class _PyramidSpatialPoolingModule(nn.Module):
+class _PyramidPoolingModule(nn.Module):
 	def __init__(self, in_channels, down_channels, out_size, levels=(1, 2, 3, 6)):
-		super(_PyramidSpatialPoolingModule, self).__init__()
+		super(_PyramidPoolingModule, self).__init__()
 
 		self.out_channels = len(levels) * down_channels
 
 		self.layers = nn.ModuleList()
 		for level in levels:
-			layer = nn.Sequential(
+			self.layers.append(nn.Sequential(
 				nn.AdaptiveAvgPool2d(level),
 				nn.Conv2d(in_channels, down_channels, kernel_size=1, padding=0, bias=False),
 				nn.BatchNorm2d(down_channels),
 				nn.ReLU(inplace=True),
 				nn.Upsample(size=out_size, mode='bilinear')
-			)
-			self.layers.append(layer)
+			))
 
 	def forward(self, x):
 		
@@ -87,6 +87,31 @@ class _PyramidSpatialPoolingModule(nn.Module):
 		out = torch.cat(features, 1)
 
 		return out
+
+class _LearnedBilinearDeconvModule(nn.Module):
+	def __init__(self, channels):
+		super(_LearnedBilinearDeconvModule, self).__init__()
+		self.deconv = nn.ConvTranspose2d(channels, channels, kernel_size=4, stride=2, padding=1)
+		self.deconv.weight.data = self.make_bilinear_weights(4, channels)
+		self.deconv.bias.data.zero_()
+
+	def forward(self, x):
+		out = self.deconv(x)
+		return out
+
+	def make_bilinear_weights(self, size, num_channels):
+		factor = (size + 1) // 2
+		if size % 2 == 1:
+			center = factor - 1
+		else:
+			center = factor - 0.5
+		og = np.ogrid[:size, :size]
+		filt = (1 - abs(og[0] - center) / factor) * (1 - abs(og[1] - center) / factor)
+		filt = torch.from_numpy(filt)
+		w = torch.zeros(num_channels, num_channels, size, size)
+		for i in range(num_channels):
+			w[i, i] = filt
+		return w
 
 class GCN_COMBINED(nn.Module):
 	def __init__(self, num_classes, input_size, k=7):
@@ -141,13 +166,19 @@ class GCN_COMBINED(nn.Module):
 		self.brm8 = _BoundaryRefineModule(num_classes)
 		self.brm9 = _BoundaryRefineModule(num_classes)
 
-		self.deconv1 = _UpsampleModule(num_classes)
-		self.deconv2 = _UpsampleModule(num_classes)
-		self.deconv3 = _UpsampleModule(num_classes)
-		self.deconv4 = _UpsampleModule(num_classes)
-		self.deconv5 = _UpsampleModule(num_classes)
+		# self.deconv1 = _UpsampleModule(num_classes)
+		# self.deconv2 = _UpsampleModule(num_classes)
+		# self.deconv3 = _UpsampleModule(num_classes)
+		# self.deconv4 = _UpsampleModule(num_classes)
+		# self.deconv5 = _UpsampleModule(num_classes)
+		
+		self.deconv1 = _LearnedBilinearDeconvModule(num_classes)
+		self.deconv2 = _LearnedBilinearDeconvModule(num_classes)
+		self.deconv3 = _LearnedBilinearDeconvModule(num_classes)
+		self.deconv4 = _LearnedBilinearDeconvModule(num_classes)
+		self.deconv5 = _LearnedBilinearDeconvModule(num_classes)
 
-		self.psp = _PyramidSpatialPoolingModule(num_classes, 7, input_size)
+		self.psp = _PyramidPoolingModule(num_classes, 10, input_size, levels=(1, 2, 3, 6, 8))
 		self.final = nn.Sequential(
 			nn.Conv2d(num_classes + self.psp.out_channels, num_classes, kernel_size=3, padding=1),
 			nn.BatchNorm2d(num_classes),
@@ -157,7 +188,7 @@ class GCN_COMBINED(nn.Module):
 		initialize_weights(self.gcm1, self.gcm2, self.gcm3, self.gcm4, self.brm1, self.brm2, self.brm3,
 					self.brm4, self.brm5, self.brm6, self.brm7, self.brm8, self.brm9)
 
-		initialize_weights(self.deconv1, self.deconv2, self.deconv3, self.deconv4, self.deconv5)
+		# initialize_weights(self.deconv1, self.deconv2, self.deconv3, self.deconv4, self.deconv5)
 
 		initialize_weights(self.psp, self.final)
 
