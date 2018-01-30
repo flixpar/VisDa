@@ -18,7 +18,6 @@ paths = args.paths
 root_dir = paths["data_train_path"]
 sys.path.append(paths["project_path"])
 
-PROCESSORS = 8
 
 class VisDaDataset(data.Dataset):
 

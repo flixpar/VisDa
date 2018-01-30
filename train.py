@@ -4,6 +4,7 @@ import argparse
 from util import setup
 
 from experiments import		basic
+from experiments import 	aug
 
 def main(args):
 	config = setup.load_args(os.getcwd())
@@ -21,6 +22,8 @@ def parse_args():
 def get_experiment(name, config):
 	if name == "basic":
 		experiment = basic.Basic(config)
+	if name == "aug":
+		experiment = aug.Trainer(config)
 	else:
 		raise ValueError("Invalid experiment name.")
 
