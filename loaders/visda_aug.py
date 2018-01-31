@@ -65,8 +65,8 @@ class VisDaAugDataset(data.Dataset):
 
 				if factor < 1.0:
 
-					dh = size[0] - scale_size[0]
-					dw = size[1] - scale_size[1]
+					dh = size[1] - scale_size[1]
+					dw = size[0] - scale_size[0]
 
 					top = int(dh/2) if dh%2==0 else int(dh/2)+1
 					bottom = int(dh/2)

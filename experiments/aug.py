@@ -39,6 +39,8 @@ class Trainer():
 		self.scheduler = self.get_scheduler(self.optimizer, self.evaluator)
 		self.loss_func = self.get_loss_func()
 
+		self.args.batch_size = 1
+
 		# setup logging
 		self.logger = Logger(self.args, self.evaluator)
 		self.logger.log_args()
