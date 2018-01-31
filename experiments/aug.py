@@ -12,7 +12,7 @@ from models.gcn_psp import 			GCN_PSP
 from models.gcn_comb import 		GCN_COMBINED
 from models.unet import 			UNet
 
-from loaders.visda import VisDaAugDataset
+from loaders.visda_aug import VisDaAugDataset
 from loaders.cityscapes_select import CityscapesSelectDataset
 
 from tqdm import tqdm
@@ -26,7 +26,7 @@ from util import setup
 from util.logger import Logger
 
 
-class Basic():
+class Trainer():
 
 	def __init__(self, config):
 
@@ -98,8 +98,9 @@ class Basic():
 
 			total_iterations = int(len(self.dataset)/self.args.batch_size)
 			for i, (image, label) in tqdm(enumerate(self.dataloader), total=total_iterations):
-				img = 
-				lbl = 0
+				bs, ncrops, c, h, w = image.size()
+				image = image.view(-1, c, h, w)
+				label = label.view(-1, h, w)
 
 				img = autograd.Variable(image.cuda())
 				lbl = autograd.Variable(label.cuda())

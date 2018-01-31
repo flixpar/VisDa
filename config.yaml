@@ -1,5 +1,5 @@
 {
-    model: "GCN_DECONV",
+    model: "GCN",
     optimizer: "SGD",
 
     max_epochs: 12,
@@ -15,10 +15,9 @@
     default_img_size: !!python/tuple [1052, 1914],
 
     lr_decay: True,
+    scheduler: "poly",
     lr_decay_freq: 1,
     lr_decay_power: 0.9,
-
-    scheduler: "poly",
 
     eval_freq: 5000,
     eval_samples: 25,

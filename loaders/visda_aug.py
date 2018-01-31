@@ -55,24 +55,45 @@ class VisDaAugDataset(data.Dataset):
 		images = []
 		labels = []
 
-		scale_factors = [1.0, 1.2, 1.4, 1.6]
+		scale_factors = [0.90, 1.00, 1.20, 1.35, 1.50]
 		for factor in scale_factors:
-			scale_size = (int(factor * size[0]), int(factor * size[1]))
 
-			a = cv2.resize(img, scale_size, interpolation=cv2.INTER_AREA)
-			b = cv2.resize(lbl, scale_size, interpolation=cv2.INTER_NEAREST)
+			if factor != 1.0:
+				scale_size = (int(factor * size[0]), int(factor * size[1]))
+				a = cv2.resize(img, scale_size, interpolation=cv2.INTER_AREA)
+				b = cv2.resize(lbl, scale_size, interpolation=cv2.INTER_NEAREST)
 
-			startx = randint(0,scale_size[1] - size[1])
-			starty = randint(0,scale_size[0] - size[0])
+				if factor < 1.0:
 
-			endx = startx + size[1]
-			endy = starty + size[0]
+					dh = size[0] - scale_size[0]
+					dw = size[1] - scale_size[1]
 
-			a = a[startx:endx, starty:endy]
-			b = b[startx:endx, starty:endy]
+					top = int(dh/2) if dh%2==0 else int(dh/2)+1
+					bottom = int(dh/2)
 
-			images.append(a)
-			labels.append(b)
+					left = int(dw/2) if dh%2==0 else int(dw/2)+1
+					right = int(dw/2)
+
+					a = cv2.copyMakeBorder(a, top=top, bottom=bottom, left=left, right=right, borderType=cv2.BORDER_CONSTANT, value=0)
+					b = cv2.copyMakeBorder(b, top=top, bottom=bottom, left=left, right=right, borderType=cv2.BORDER_CONSTANT, value=0)
+
+				if factor > 1.0:
+
+					startx = randint(0,scale_size[1] - size[1])
+					starty = randint(0,scale_size[0] - size[0])
+
+					endx = startx + size[1]
+					endy = starty + size[0]
+
+					a = a[startx:endx, starty:endy]
+					b = b[startx:endx, starty:endy]
+
+				images.append(a)
+				labels.append(b)
+
+			else:
+				images.append(img)
+				labels.append(lbl)
 
 		images = np.stack(images, axis=0).transpose((0, 3, 1, 2))
 		labels = np.stack(labels, axis=0)
