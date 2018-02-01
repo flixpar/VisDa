@@ -35,7 +35,7 @@ from util.setup import *
 
 class Evaluator:
 
-	def __init__(self, dataset, samples=30, metrics=["miou", "cls_iou"], crf=True, standalone=False, save_pred=False, per_image=False, pred_path=None):
+	def __init__(self, dataset, samples=30, metrics=["miou", "cls_iou"], crf=True, standalone=False, save_pred=False, per_image=False, pred_path=None, flip=True):
 		self.n_samples = samples
 		self.metrics = metrics
 		self.use_crf = crf
@@ -44,6 +44,7 @@ class Evaluator:
 		self.per_image = per_image
 		self.dataset = dataset
 		self.img_size = self.dataset.img_size
+		self.flip = flip
 
 		self.dataloader = data.DataLoader(self.dataset, batch_size=1, shuffle=False, num_workers=6)
 
@@ -70,6 +71,14 @@ class Evaluator:
 			# inference on image
 			pred = self.predict(model, image)
 			pred = self.upsample(pred)
+
+			# augment with flip
+			if self.flip:
+				img_flip = self.flip(image, 3)
+				pred_flip = self.predict(model, img_flip)
+				pred_flip = self.upsample(pred_flip)
+				pred_flip = np.flip(pred_flip, 2)
+				pred = self.softmax(pred) + self.softmax(pred_flip)
 
 			# refine prediction with CRF
 			if self.use_crf:
