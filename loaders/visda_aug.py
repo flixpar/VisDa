@@ -9,6 +9,8 @@ import torch
 import yaml
 from torch.utils import data
 
+from skimage import transform
+
 import util.visda_helper as visda
 
 from util.setup import load_args
@@ -35,6 +37,8 @@ class VisDaAugDataset(data.Dataset):
 		self.img_size = im_size
 		self.default_size = visda.shape
 
+		self.transforms = ["rotation"]
+
 	def __getitem__(self, index):
 
 		img_fn = self.image_fnlist[index]
@@ -55,45 +59,59 @@ class VisDaAugDataset(data.Dataset):
 		images = []
 		labels = []
 
-		scale_factors = [0.90, 1.00, 1.20, 1.35, 1.50]
-		for factor in scale_factors:
+		if "scale" in self.transforms:
 
-			if factor != 1.0:
-				scale_size = (int(factor * size[0]), int(factor * size[1]))
-				a = cv2.resize(img, scale_size, interpolation=cv2.INTER_AREA)
-				b = cv2.resize(lbl, scale_size, interpolation=cv2.INTER_NEAREST)
+			scale_factors = [0.90, 1.00, 1.20, 1.35, 1.50]
+			for factor in scale_factors:
 
-				if factor < 1.0:
+				if factor != 1.0:
+					scale_size = (int(factor * size[0]), int(factor * size[1]))
+					a = cv2.resize(img, scale_size, interpolation=cv2.INTER_AREA)
+					b = cv2.resize(lbl, scale_size, interpolation=cv2.INTER_NEAREST)
 
-					dh = size[1] - scale_size[1]
-					dw = size[0] - scale_size[0]
+					if factor < 1.0:
 
-					top = int(dh/2) if dh%2==0 else int(dh/2)+1
-					bottom = int(dh/2)
+						dh = size[1] - scale_size[1]
+						dw = size[0] - scale_size[0]
 
-					left = int(dw/2) if dh%2==0 else int(dw/2)+1
-					right = int(dw/2)
+						top = int(dh/2) if dh%2==0 else int(dh/2)+1
+						bottom = int(dh/2)
 
-					a = cv2.copyMakeBorder(a, top=top, bottom=bottom, left=left, right=right, borderType=cv2.BORDER_CONSTANT, value=0)
-					b = cv2.copyMakeBorder(b, top=top, bottom=bottom, left=left, right=right, borderType=cv2.BORDER_CONSTANT, value=0)
+						left = int(dw/2) if dh%2==0 else int(dw/2)+1
+						right = int(dw/2)
 
-				if factor > 1.0:
+						a = cv2.copyMakeBorder(a, top=top, bottom=bottom, left=left, right=right, borderType=cv2.BORDER_CONSTANT, value=0)
+						b = cv2.copyMakeBorder(b, top=top, bottom=bottom, left=left, right=right, borderType=cv2.BORDER_CONSTANT, value=0)
 
-					startx = randint(0,scale_size[1] - size[1])
-					starty = randint(0,scale_size[0] - size[0])
+					if factor > 1.0:
 
-					endx = startx + size[1]
-					endy = starty + size[0]
+						startx = randint(0,scale_size[1] - size[1])
+						starty = randint(0,scale_size[0] - size[0])
 
-					a = a[startx:endx, starty:endy]
-					b = b[startx:endx, starty:endy]
+						endx = startx + size[1]
+						endy = starty + size[0]
+
+						a = a[startx:endx, starty:endy]
+						b = b[startx:endx, starty:endy]
+
+					images.append(a)
+					labels.append(b)
+
+				else:
+					images.append(img)
+					labels.append(lbl)
+
+		if "rotation" in self.transforms:
+
+			rotations = [-16, -8, 0, 8, 16]
+			for angle in rotations:
+				
+				a = transform.rotate(img, angle, resize=False, mode='constant', cval=0, preserve_range=True)
+				b = transform.rotate(lbl, angle, resize=False, mode='constant', cval=0, preserve_range=True)
 
 				images.append(a)
 				labels.append(b)
 
-			else:
-				images.append(img)
-				labels.append(lbl)
 
 		images = np.stack(images, axis=0).transpose((0, 3, 1, 2))
 		labels = np.stack(labels, axis=0)
