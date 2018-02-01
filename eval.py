@@ -59,9 +59,9 @@ class Evaluator:
 			l = list(l)
 
 			# unpack values from loader
-			image, _	= l[0]
+			image, _		= l[0]
 			image_full, gt	= l[1]
-			name		= l[2][0] if len(l)>2 else None
+			name			= l[2][0] if len(l)>2 else None
 
 			# convert inputs as needed
 			image_full = np.squeeze(image_full.cpu().numpy())
@@ -148,6 +148,11 @@ class Evaluator:
 		res = np.array(Q).reshape((num_cls, img.shape[0], img.shape[1]))
 
 		return res
+
+	def flip(self, x, dim):
+		dim = x.dim() + dim if dim < 0 else dim
+		inds = tuple(slice(None, None) if i != dim else x.new(torch.arange(x.size(i)-1, -1, -1).tolist()).long() for i in range(x.dim()))
+		return x[inds]
 
 
 if __name__ == "__main__":

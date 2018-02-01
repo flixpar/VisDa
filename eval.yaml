@@ -3,6 +3,7 @@ version: 1,
 epochs: 12,
 samples: 100,
 mode: "cityscapes_select",
+with_flip: True,
 crf: False,
 save_pred: False,
 per_image: False
