@@ -103,11 +103,12 @@ class GCN_PSP(nn.Module):
 		self.brm8 = _BoundaryRefineModule(num_classes)
 		self.brm9 = _BoundaryRefineModule(num_classes)
 
-		self.psp = _PyramidSpatialPoolingModule(num_classes, 5, input_size)
+		self.psp = _PyramidSpatialPoolingModule(num_classes, 10, input_size, levels=(1, 2, 3, 6, 8))
 		self.final = nn.Sequential(
-			nn.Conv2d(num_classes + self.psp.out_channels, num_classes, kernel_size=3, padding=1),
+			nn.Conv2d(num_classes + self.psp.out_channels, num_classes, kernel_size=3, padding=1, bias=False),
 			nn.BatchNorm2d(num_classes),
 			nn.ReLU(inplace=True)
+			nn.Conv2d(num_classes, num_classes, kernel_size=1, padding=0)
 		)
 
 		initialize_weights(self.gcm1, self.gcm2, self.gcm3, self.gcm4, self.brm1, self.brm2, self.brm3,
