@@ -88,6 +88,6 @@ class CityscapesSelectDataset(data.Dataset):
 	def enhance_contrast(self, img):
 		img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 		img = equalize_adapthist(img)
-		img = rescale_intensity(img, out_range='uint8').astype(np.uint8)	
+		img = rescale_intensity(img, out_range='uint8').astype(np.uint8)
 		img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
 		return img

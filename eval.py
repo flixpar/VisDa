@@ -74,11 +74,11 @@ class Evaluator:
 
 			# augment with flip
 			if self.flip:
-				img_flip = self.flip(image, 3)
+				img_flip = self.flip_tensor(image, 3)
 				pred_flip = self.predict(model, img_flip)
 				pred_flip = self.upsample(pred_flip)
 				pred_flip = np.flip(pred_flip, 2)
-				pred = self.softmax(pred) + self.softmax(pred_flip)
+				pred = (pred/pred.mean()) + (pred_flip/pred_flip.mean())
 
 			# refine prediction with CRF
 			if self.use_crf:
@@ -102,7 +102,7 @@ class Evaluator:
 					save_set(image_full, gt, alt, pred, i+1, path)
 				else:
 					save_set(image_full, gt, pred, None, i+1, path)
-		
+
 
 		model.train()
 		return scores.final_scores()
@@ -158,7 +158,7 @@ class Evaluator:
 
 		return res
 
-	def flip(self, x, dim):
+	def flip_tensor(self, x, dim):
 		dim = x.dim() + dim if dim < 0 else dim
 		inds = tuple(slice(None, None) if i != dim else x.new(torch.arange(x.size(i)-1, -1, -1).tolist()).long() for i in range(x.dim()))
 		return x[inds]

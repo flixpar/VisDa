@@ -22,7 +22,7 @@ def parse_args():
 def get_experiment(name, config):
 	if name == "basic":
 		experiment = basic.Basic(config)
-	if name == "aug":
+	elif name == "aug":
 		experiment = aug.Trainer(config)
 	else:
 		raise ValueError("Invalid experiment name.")

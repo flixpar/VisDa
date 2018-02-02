@@ -39,8 +39,6 @@ class Trainer():
 		self.scheduler = self.get_scheduler(self.optimizer, self.evaluator)
 		self.loss_func = self.get_loss_func()
 
-		self.args.batch_size = 1
-
 		# setup logging
 		self.logger = Logger(self.args, self.evaluator)
 		self.logger.log_args()
@@ -79,8 +77,8 @@ class Trainer():
 		return scheduler
 
 	def get_dataloader(self):
-		dataset = VisDaAugDataset(im_size=self.args.img_size)
-		dataloader = data.DataLoader(dataset, batch_size=1, shuffle=True, num_workers=8)
+		dataset = VisDaAugDataset(im_size=self.args.img_size, samples=None)
+		dataloader = data.DataLoader(dataset, batch_size=self.args.batch_size, shuffle=True, num_workers=8, drop_last=True)
 		return dataset, dataloader
 
 	def get_evaluator(self):

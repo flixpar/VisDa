@@ -64,7 +64,7 @@ class _PyramidSpatialPoolingModule(nn.Module):
 			self.layers.append(layer)
 
 	def forward(self, x):
-		
+
 		features = [layer(x) for layer in self.layers]
 		out = torch.cat(features, 1)
 

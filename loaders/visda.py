@@ -1,7 +1,7 @@
 import glob
-import multiprocessing as mp
 import os
 import sys
+import random
 
 import cv2
 import numpy as np
@@ -13,7 +13,7 @@ import util.visda_helper as visda
 
 from util.setup import load_args
 args = load_args(os.getcwd())
-paths = args.paths 
+paths = args.paths
 
 root_dir = paths["data_train_path"]
 sys.path.append(paths["project_path"])
@@ -21,13 +21,13 @@ sys.path.append(paths["project_path"])
 
 class VisDaDataset(data.Dataset):
 
-	def __init__(self, im_size=visda.shape, mode="train"):
-		if mode == "train":
-			self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
-			self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
-		else:
-			self.image_fnlist = glob.glob(os.path.join(root_dir, "eval", "images", "*.png"))
-			self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
+	def __init__(self, im_size=visda.shape, mode="train", samples=None):
+		self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
+
+		if samples is not None:
+			self.image_fnlist = random.sample(self.image_fnlist, samples)
+
+		self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
 
 		self.num_classes = visda.num_classes
 		self.img_mean = visda.img_mean

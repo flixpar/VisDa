@@ -2,6 +2,7 @@ import glob
 import os
 import sys
 from random import randint
+import random
 
 import cv2
 import numpy as np
@@ -15,7 +16,7 @@ import util.visda_helper as visda
 
 from util.setup import load_args
 args = load_args(os.getcwd())
-paths = args.paths 
+paths = args.paths
 
 root_dir = paths["data_train_path"]
 sys.path.append(paths["project_path"])
@@ -23,8 +24,12 @@ sys.path.append(paths["project_path"])
 
 class VisDaAugDataset(data.Dataset):
 
-	def __init__(self, im_size=visda.shape):
+	def __init__(self, im_size=visda.shape, samples=None):
 		self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
+
+		if samples is not None:
+			self.image_fnlist = random.sample(self.image_fnlist, samples)
+
 		self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
 		self.num_images = len(self.image_fnlist)
 
@@ -61,7 +66,7 @@ class VisDaAugDataset(data.Dataset):
 
 		if "scale" in self.transforms:
 
-			scale_factors = [0.90, 1.00, 1.20, 1.35, 1.50]
+			scale_factors = [0.80, 1.00, 1.20, 1.40, 1.60]
 			for factor in scale_factors:
 
 				if factor != 1.0:
@@ -105,7 +110,7 @@ class VisDaAugDataset(data.Dataset):
 
 			rotations = [-16, -8, 0, 8, 16]
 			for angle in rotations:
-				
+
 				a = transform.rotate(img, angle, resize=False, mode='constant', cval=0, preserve_range=True)
 				b = transform.rotate(lbl, angle, resize=False, mode='constant', cval=0, preserve_range=True)
 
