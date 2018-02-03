@@ -37,7 +37,9 @@ class VisDaAugDataset(data.Dataset):
 		self.img_mean = visda.img_mean
 		self.img_stdev = visda.img_stdev
 
-		self.class_weights = torch.FloatTensor(visda.class_weights)
+		class_weights = -1 * np.log(np.array(visda.class_weights))
+		class_weights /= np.max(class_weights)
+		self.class_weights = torch.FloatTensor(class_weights)
 
 		self.img_size = im_size
 		self.default_size = visda.shape
