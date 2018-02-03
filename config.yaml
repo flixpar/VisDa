@@ -1,9 +1,9 @@
 {
-    model: "GCN",
+    model: "GCN_PSP",
     optimizer: "SGD",
 
     max_epochs: 12,
-    batch_size: 4,
+    batch_size: 3,
 
     lr: 0.00002,
     weight_decay: 0.0005,
@@ -26,12 +26,12 @@
     resume_epoch: 0,
 
     paths: {
-        project_path: "/home/flixpar/VisDa",
-        data_base_path: "/media/data/",
-        data_train_path: "/media/data/train/",
-        cityscapes_path: "/media/data/cityscapes/",
-        cityscapes_val_path: "/media/data/cityscapes_eval/",
-        pretrained_models_path: "/media/data/pretrained/"
+        project_path: "/cis/home/fparker/VisDa",
+        data_base_path: "/cis/home/fparker/data",
+        data_train_path: "/cis/home/fparker/data/train/",
+        cityscapes_path: "/cis/home/fparker/data/cityscapes/",
+        cityscapes_val_path: "/cis/home/fparker/data/cityscapes_eval/",
+        pretrained_models_path: "/cis/home/fparker/data/pretrained/"
     }
 
 }
