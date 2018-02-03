@@ -31,7 +31,7 @@ class _PyramidPoolingModule(nn.Module):
 
 class PSPNet(nn.Module):
 
-	def __init__(self, img_size):
+	def __init__(self, num_classes, img_size):
 		super(PSPNet, self).__init__()
 
 		# load resnet
