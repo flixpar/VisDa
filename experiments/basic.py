@@ -1,5 +1,3 @@
-import cv2
-
 import torch
 from torch import nn
 from torch import optim
@@ -107,7 +105,7 @@ class Basic(Trainer):
 		return scheduler
 
 	def get_dataloader(self):
-		dataset = VisDaDataset(im_size=self.args.img_size, samples=None)
+		dataset = VisDaDataset(im_size=self.args.img_size, samples=64)
 		dataloader = data.DataLoader(dataset, batch_size=self.args.batch_size, shuffle=True, num_workers=8, drop_last=True)
 		return dataset, dataloader
 

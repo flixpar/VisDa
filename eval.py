@@ -5,7 +5,7 @@ from torch.autograd import Variable
 import torch.nn.functional as F
 torch.backends.cudnn.benchmark = True
 
-# import pydensecrf.densecrf as dcrf
+import pydensecrf.densecrf as dcrf
 
 import os
 import yaml
@@ -137,7 +137,7 @@ class Evaluator:
 		clip = 1e-8
 
 		# init crf
-		# d = dcrf.DenseCRF2D(img.shape[1], img.shape[0], num_cls)
+		d = dcrf.DenseCRF2D(img.shape[1], img.shape[0], num_cls)
 
 		# create unary
 		uniform = np.ones(pred.shape) / num_cls
@@ -145,18 +145,18 @@ class Evaluator:
 		U = np.clip(U, clip, 1.0)
 		U = -np.log(U).reshape([num_cls, -1]).astype(np.float32)
 
-		# d.setUnaryEnergy(U)
+		d.setUnaryEnergy(U)
 
 		# create pairwise
-		# d.addPairwiseGaussian(sxy=(3,3), compat=3, kernel=dcrf.DIAG_KERNEL, normalization=dcrf.NORMALIZE_SYMMETRIC)
-		# d.addPairwiseBilateral(sxy=(40,40), srgb=(15,15,15), rgbim=np.ascontiguousarray(img), compat=10, kernel=dcrf.DIAG_KERNEL, normalization=dcrf.NORMALIZE_SYMMETRIC)
+		d.addPairwiseGaussian(sxy=(3,3), compat=3, kernel=dcrf.DIAG_KERNEL, normalization=dcrf.NORMALIZE_SYMMETRIC)
+		d.addPairwiseBilateral(sxy=(40,40), srgb=(15,15,15), rgbim=np.ascontiguousarray(img), compat=10, kernel=dcrf.DIAG_KERNEL,
+			normalization=dcrf.NORMALIZE_SYMMETRIC)
 
 		# inference
-		# Q = d.inference(4)
-		# res = np.array(Q).reshape((num_cls, img.shape[0], img.shape[1]))
+		Q = d.inference(4)
+		res = np.array(Q).reshape((num_cls, img.shape[0], img.shape[1]))
 
-		# return res
-		return 0
+		return res
 
 	def flip_tensor(self, x, dim):
 		dim = x.dim() + dim if dim < 0 else dim

@@ -107,7 +107,7 @@ class GCN_PSP(nn.Module):
 		self.final = nn.Sequential(
 			nn.Conv2d(num_classes + self.psp.out_channels, num_classes, kernel_size=3, padding=1, bias=False),
 			nn.BatchNorm2d(num_classes),
-			nn.ReLU(inplace=True),
+			nn.ReLU(inplace=True)
 			nn.Conv2d(num_classes, num_classes, kernel_size=1, padding=0)
 		)
 
