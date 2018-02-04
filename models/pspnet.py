@@ -2,6 +2,7 @@ import torch
 from torch import nn
 from torchvision import models
 
+import os
 from util.setup import load_args
 args = load_args(os.getcwd())
 pretrained_dir = args.paths["pretrained_models_path"]
@@ -49,18 +50,28 @@ class PSPNet(nn.Module):
 		self.resblock4 = resnet.layer4
 
 		# pyramid spatial pooling module
-		self.ppm = _PyramidPoolingModule(512, 32, img_size)
+		res_out_size = (int(img_size[0]/32), int(img_size[1]/32))
+		self.ppm = _PyramidPoolingModule(2048, 64, res_out_size)
 		self.final = nn.Sequential(
-			nn.Conv2d(512 + self.ppm.num_features, num_classes, kernel_size=3, padding=1),
+			nn.Conv2d(2048 + self.ppm.num_features, num_classes, kernel_size=3, padding=1, bias=False),
 			nn.BatchNorm2d(num_classes),
-			nn.ReLU(inplace=True)
+			nn.ReLU(inplace=True),
+			nn.Conv2d(num_classes, num_classes, kernel_size=1, padding=0, bias=True)
+		)
+
+		# classifier layer for aux
+		self.aux_final = nn.Sequential(
+				nn.Conv2d(1024, 256, kernel_size=3, padding=1, bias=False),
+				nn.BatchNorm2d(256),
+				nn.ReLU(inplace=True),
+				nn.Conv2d(256, num_classes, kernel_size=1, padding=0, bias=True)
 		)
 
 		# define upsampler
 		self.up = nn.Upsample(size=img_size, mode='bilinear')
 
 		# initialize weights for non-resnet layers
-		initialize_weights(self.first, self.ppm, self.final)
+		initialize_weights(self.ppm, self.final, self.aux_final)
 
 	def forward(self, x):
 		
@@ -72,12 +83,17 @@ class PSPNet(nn.Module):
 		x = self.resblock4(aux)
 
 		x = torch.cat([self.ppm(x), x], 1)
+
 		x = self.final(x)
+		aux = self.aux_final(aux)
 
 		x = self.up(x)
 		aux = self.up(aux)
 
-		return x, aux
+		if self.training:
+			return x, aux
+		else:
+			return x
 
 
 def initialize_weights(*blocks):
