@@ -24,13 +24,14 @@ import util.cityscapes_helper as cityscapes
 
 class CityscapesSelectDataset(data.Dataset):
 
-	def __init__(self, im_size=cityscapes.shape, n_samples=30):
+	def __init__(self, im_size=cityscapes.shape, n_samples=30, mode="bgr"):
 		self.image_fnlist = sorted(glob.glob(os.path.join(data_dir, "*_img.png")))
 		self.label_fnlist = [fn.replace("img", "lbl") for fn in self.image_fnlist]
 
 		self.num_classes = cityscapes.num_classes
 		self.img_mean = cityscapes.img_mean
 		self.img_stdev = cityscapes.img_stdev
+		self.img_mode = mode
 
 		self.size = len(self.image_fnlist)
 		self.img_size = im_size
@@ -54,8 +55,13 @@ class CityscapesSelectDataset(data.Dataset):
 		img = cv2.resize(src_img.copy(), size, interpolation=cv2.INTER_AREA)
 		lbl = cv2.resize(src_lbl.copy(), size, interpolation=cv2.INTER_NEAREST)
 
-		img = img - self.img_mean
-		img /= self.img_stdev
+		if self.img_mode == "rgb":
+			img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+			img = img - np.flip(self.img_mean, 0)
+			img /= np.flip(self.img_stdev, 0)
+		else:
+			img = img - self.img_mean
+			img /= self.img_stdev
 
 		img = torch.from_numpy(img).permute(2, 0, 1).type(torch.FloatTensor)
 		lbl = torch.from_numpy(lbl).type(torch.LongTensor)
