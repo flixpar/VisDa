@@ -33,7 +33,9 @@ class GTA5Dataset(data.Dataset):
 		self.img_mean = visda.img_mean
 		self.img_stdev = visda.img_stdev
 
-		self.class_weights = torch.FloatTensor(visda.class_weights)
+		class_weights = -1 * np.log(np.array(visda.class_weights))
+		class_weights /= np.max(class_weights)
+		self.class_weights = torch.FloatTensor(class_weights)
 
 		self.num_images = len(self.image_fnlist)
 		self.img_size = im_size

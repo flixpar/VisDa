@@ -36,12 +36,15 @@ class CityscapesDataset(data.Dataset):
 		self.img_size = im_size
 		self.default_size = cityscapes.shape
 
-		self.class_weights = torch.FloatTensor([
+		class_weights = [
 			0.11586621, 0.3235678,  0.19765419, 0.0357135, 0.05368808, 0.14305691,
 			0.06162343, 0.01132036, 0.00601009, 0.00239826, 0.01094606, 0.00802482,
 			0.01207127, 0.00225619, 0.00184278, 0.00483001, 0.00307986, 0.00130785,
 			0.00064916, 0.00409318
-		])
+		]
+		class_weights = -1 * np.log(np.array(class_weights))
+		class_weights /= np.max(class_weights)
+		self.class_weights = torch.FloatTensor(class_weights)
 
 	def __getitem__(self, index):
 		img_fn = self.image_fnlist[index]
