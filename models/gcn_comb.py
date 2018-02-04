@@ -47,24 +47,6 @@ class _BoundaryRefineModule(nn.Module):
 		out = x + residual
 		return out
 
-class _UpsampleModule(nn.Module):
-	def __init__(self, channels):
-		super(_UpsampleModule, self).__init__()
-		self.pre = nn.Sequential(
-			nn.Conv2d(channels, channels, kernel_size=3, padding=1),
-			nn.BatchNorm2d(channels),
-			nn.ReLU(inplace=True)
-		)
-		self.deconv = nn.ConvTranspose2d(channels, channels, kernel_size=2, stride=2, padding=0)
-		self.upsample = nn.Upsample(scale_factor=2, mode="bilinear")
-
-	def forward(self, x):
-		p = self.pre(x)
-		de = self.deconv(p)
-		up = self.upsample(x)
-		out = de + up
-		return out
-
 class _PyramidPoolingModule(nn.Module):
 	def __init__(self, in_channels, down_channels, out_size, levels=(1, 2, 3, 6)):
 		super(_PyramidPoolingModule, self).__init__()
@@ -166,29 +148,22 @@ class GCN_COMBINED(nn.Module):
 		self.brm8 = _BoundaryRefineModule(num_classes)
 		self.brm9 = _BoundaryRefineModule(num_classes)
 
-		# self.deconv1 = _UpsampleModule(num_classes)
-		# self.deconv2 = _UpsampleModule(num_classes)
-		# self.deconv3 = _UpsampleModule(num_classes)
-		# self.deconv4 = _UpsampleModule(num_classes)
-		# self.deconv5 = _UpsampleModule(num_classes)
-		
 		self.deconv1 = _LearnedBilinearDeconvModule(num_classes)
 		self.deconv2 = _LearnedBilinearDeconvModule(num_classes)
 		self.deconv3 = _LearnedBilinearDeconvModule(num_classes)
 		self.deconv4 = _LearnedBilinearDeconvModule(num_classes)
 		self.deconv5 = _LearnedBilinearDeconvModule(num_classes)
 
-		self.psp = _PyramidPoolingModule(num_classes, 10, input_size, levels=(1, 2, 3, 6, 8))
+		self.psp = _PyramidPoolingModule(num_classes, 10, input_size, levels=(1, 2, 3, 6, 9))
 		self.final = nn.Sequential(
 			nn.Conv2d(num_classes + self.psp.out_channels, num_classes, kernel_size=3, padding=1),
 			nn.BatchNorm2d(num_classes),
-			nn.ReLU(inplace=True)
+			nn.ReLU(inplace=True),
+			nn.Conv2d(num_classes, num_classes, kernel_size=1, padding=0)
 		)
 
 		initialize_weights(self.gcm1, self.gcm2, self.gcm3, self.gcm4, self.brm1, self.brm2, self.brm3,
 					self.brm4, self.brm5, self.brm6, self.brm7, self.brm8, self.brm9)
-
-		# initialize_weights(self.deconv1, self.deconv2, self.deconv3, self.deconv4, self.deconv5)
 
 		initialize_weights(self.psp, self.final)
 

@@ -5,6 +5,7 @@ from util import setup
 
 from experiments import		basic
 from experiments import 	aug
+from experiments import 	pspnet
 
 def main(args):
 	config = setup.load_args(os.getcwd())
@@ -24,6 +25,8 @@ def get_experiment(name, config):
 		experiment = basic.Basic(config)
 	elif name == "aug":
 		experiment = aug.Trainer(config)
+	elif name == "pspnet":
+		experiment = pspnet.TrainPSPNet(config)
 	else:
 		raise ValueError("Invalid experiment name.")
 
