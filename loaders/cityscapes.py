@@ -24,7 +24,7 @@ import util.cityscapes_helper as cityscapes
 
 class CityscapesDataset(data.Dataset):
 
-	def __init__(self, im_size=cityscapes.shape, mode="val"):
+	def __init__(self, im_size=cityscapes.shape, mode="val", col_mode="bgr"):
 		self.image_fnlist = glob.glob(os.path.join(paths["cityscapes_path"], "images", mode, "**", "*.png"), recursive=True)
 		self.label_fnlist = [fn.replace("images", "annotations").replace("leftImg8bit", "gtFine_labelIds") for fn in self.image_fnlist]
 
@@ -35,6 +35,7 @@ class CityscapesDataset(data.Dataset):
 		self.size = len(self.image_fnlist)
 		self.img_size = im_size
 		self.default_size = cityscapes.shape
+		self.color_mode = col_mode
 
 		class_weights = [
 			0.11586621, 0.3235678,  0.19765419, 0.0357135, 0.05368808, 0.14305691,
@@ -60,8 +61,13 @@ class CityscapesDataset(data.Dataset):
 		img = cv2.resize(src_img.copy(), size, interpolation=cv2.INTER_AREA)
 		lbl = cv2.resize(src_lbl.copy(), size, interpolation=cv2.INTER_NEAREST)
 
-		img = img - self.img_mean
-		img /= self.img_stdev
+		if self.color_mode == "rgb":
+			img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+			img = img - np.flip(self.img_mean, 0)
+			img /= np.flip(self.img_stdev, 0)
+		else:
+			img = img - self.img_mean
+			img /= self.img_stdev
 
 		img = torch.from_numpy(img).permute(2, 0, 1).type(torch.FloatTensor)
 		lbl = torch.from_numpy(lbl).type(torch.LongTensor)

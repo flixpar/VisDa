@@ -24,7 +24,7 @@ sys.path.append(paths["project_path"])
 
 class VisDaAugDataset(data.Dataset):
 
-	def __init__(self, im_size=visda.shape, samples=None):
+	def __init__(self, im_size=visda.shape, samples=None, color_mode="bgr"):
 		self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
 
 		if samples is not None:
@@ -43,6 +43,7 @@ class VisDaAugDataset(data.Dataset):
 
 		self.img_size = im_size
 		self.default_size = visda.shape
+		self.color_mode = color_mode
 
 		self.transforms = ["rotation"]
 
@@ -60,8 +61,13 @@ class VisDaAugDataset(data.Dataset):
 
 		lbl = transform_labels(lbl)
 
-		img = img - self.img_mean
-		img /= self.img_stdev
+		if self.color_mode == "rgb":
+			img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+			img = img - np.flip(self.img_mean, 0)
+			img /= np.flip(self.img_stdev, 0)
+		else:
+			img = img - self.img_mean
+			img /= self.img_stdev
 
 		images = []
 		labels = []

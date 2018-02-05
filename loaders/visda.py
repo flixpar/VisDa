@@ -21,7 +21,7 @@ sys.path.append(paths["project_path"])
 
 class VisDaDataset(data.Dataset):
 
-	def __init__(self, im_size=visda.shape, mode="train", samples=None):
+	def __init__(self, im_size=visda.shape, mode="train", samples=None, color_mode="bgr"):
 		self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
 
 		if samples is not None:
@@ -40,6 +40,7 @@ class VisDaDataset(data.Dataset):
 		self.size = len(self.image_fnlist)
 		self.img_size = im_size
 		self.default_size = visda.shape
+		self.color_mode = color_mode
 
 	def __getitem__(self, index):
 		img_fn = self.image_fnlist[index]
@@ -54,8 +55,13 @@ class VisDaDataset(data.Dataset):
 
 		lbl = transform_labels(lbl)
 
-		img = img - self.img_mean
-		img /= self.img_stdev
+		if self.color_mode == "rgb":
+			img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+			img = img - np.flip(self.img_mean, 0)
+			img /= np.flip(self.img_stdev, 0)
+		else:
+			img = img - self.img_mean
+			img /= self.img_stdev
 
 		img = torch.from_numpy(img).permute(2, 0, 1).type(torch.FloatTensor)
 		lbl = torch.from_numpy(lbl).type(torch.LongTensor)
