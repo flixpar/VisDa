@@ -20,6 +20,8 @@ from models.unet import UNet
 from models.gcn_densenet import GCN_DENSENET
 from models.gcn_deconv import GCN_DECONV
 from models.gcn_psp import GCN_PSP
+from models.gcn_comb import GCN_COMB
+from models.pspnet import PSPNet
 
 from loaders.visda import VisDaDataset
 from loaders.cityscapes import CityscapesDataset
@@ -190,7 +192,9 @@ if __name__ == "__main__":
 	elif args.model=="GCN_DENSENET":	model = GCN_DENSENET(cityscapes.num_classes, args.img_size, k=args.K).cuda()
 	elif args.model=="GCN_DECONV":		model = GCN_DECONV(cityscapes.num_classes, args.img_size, k=args.K).cuda()
 	elif args.model=="GCN_PSP":			model = GCN_PSP(cityscapes.num_classes, args.img_size, k=args.K).cuda()
+	elif args.model=="GCN_COMB":		model = GCN_COMB(cityscapes.num_classes, args.img_size).cuda()
 	elif args.model=="UNet":			model = UNet(cityscapes.num_classes).cuda()
+	elif args.model=="PSPNet":			model = PSPNet(cityscapes.num_classes, args.img_size).cuda()
 	else: raise ValueError("Invalid model arg.")
 	model.load_state_dict(torch.load(save_path))
 
