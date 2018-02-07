@@ -58,13 +58,13 @@ class Logger:
 		self.iterations += self.args.batch_size
 		img_num = (it+1) * self.args.batch_size
 
+		if img_num % 100 < self.args.batch_size:
+			self.logfile.write("it: {}, loss: {}\n".format(self.iterations, self.avgloss.get()))
+
 		if img_num % 1000 < self.args.batch_size:
 			tqdm.write("loss: {}".format(self.avgloss.get()))
 			self.logfile.flush()
 			self.avgloss.reset()
-			
-		if img_num % 100 < self.args.batch_size:
-			self.logfile.write("it: {}, loss: {}\n".format(self.iterations, self.avgloss.get()))
 
 		if img_num % self.args.eval_freq < self.args.batch_size:
 			iou = self.evaluator.eval(model)
@@ -85,7 +85,7 @@ class RunningAvg:
 		self.elements += 1
 
 	def get(self):
-		return (self.sum / self.elements)
+		return (self.sum / self.elements) if self.elements != 0 else 0
 
 	def reset(self):
 		self.sum = 0
