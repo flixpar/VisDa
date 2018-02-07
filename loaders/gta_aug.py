@@ -1,10 +1,12 @@
 import torch
+import torchvision.transforms.functional as transforms
 from torch.utils import data
 
 from PIL import Image
 import numpy as np
 
-from pathlib import Path
+import os
+import glob
 import random
 import yaml
 
@@ -21,8 +23,8 @@ class GTA5AugDataset(data.Dataset):
 
 	def __init__(self, im_size=visda.shape, batch_size=4, samples=None):
 
-		image_path = Path(paths["data_train_path"]) / "images"
-		self.image_fnlist = image_path.glob("*.png")
+		image_path = os.path.join(paths["data_train_path"], "images", "*.png")
+		self.image_fnlist = glob.glob(image_path)
 		if samples is not None:
 			self.image_fnlist = random.sample(self.image_fnlist, samples)
 		self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
@@ -40,8 +42,6 @@ class GTA5AugDataset(data.Dataset):
 		self.default_size = visda.shape
 		self.batch_size = batch_size
 
-		self.color_mode = color_mode
-
 		self.transforms = ["scale"]
 		self.scale_factors = [0.80, 1.00, 1.20, 1.40, 1.60]
 		self.aug_factor = len(self.scale_factors)
@@ -52,10 +52,9 @@ class GTA5AugDataset(data.Dataset):
 		block_pos = index %  (self.aug_factor * self.batch_size)
 
 		block_img_num = block_pos % self.batch_size
-
 		img_num = (block_num * self.batch_size) + block_img_num
-		aug_pos = block_img_num // self.aug_factor
 
+		aug_pos = block_pos // self.batch_size
 		scale_factor = self.scale_factors[aug_pos]
 
 		img_fn = self.image_fnlist[img_num]
@@ -67,10 +66,11 @@ class GTA5AugDataset(data.Dataset):
 		img, lbl = self.scale(img, lbl, scale_factor)
 		lbl = self.transform_labels(lbl)
 		
-		img = transforms.ToTensor(img)
-		lbl = transforms.ToTensor(lbl)
+		img = transforms.to_tensor(img)
+		lbl = transforms.to_tensor(lbl)
 
-		img = transforms.functional.normalize(img, self.img_mean, self.img_stdev)
+		img = transforms.normalize(img, self.img_mean, self.img_stdev)
+		lbl = torch.squeeze(lbl.type(torch.LongTensor))
 
 		return img, lbl
 
@@ -95,11 +95,25 @@ class GTA5AugDataset(data.Dataset):
 
 		if factor > 1.0:
 
-			startx = random.randint(0,scale_size[1] - size[1])
-			starty = random.randint(0,scale_size[0] - size[0])
+			startx = random.randint(0, scale_size[1] - crop_size[1])
+			starty = random.randint(0, scale_size[0] - crop_size[0])
 
-			img = transforms.functional.crop(img, startx, starty, size[1], size[0])
-			lbl = transforms.functional.crop(lbl, startx, starty, size[1], size[0])
+			img = transforms.functional.crop(img, startx, starty, crop_size[1], crop_size[0])
+			lbl = transforms.functional.crop(lbl, startx, starty, crop_size[1], crop_size[0])
+
+		if factor < 1.0:
+
+			dh = crop_size[1] - scale_size[1]
+			dw = crop_size[0] - scale_size[0]
+
+			top = dh//2 if dh%2==0 else (dh//2)+1
+			bottom = dh//2
+
+			left = dw//2 if dw%2==0 else (dw//2)+1
+			right = dw//2
+
+			img = transforms.functional.pad(img, (left, top, right, bottom))
+			lbl = transforms.functional.pad(lbl, (left, top, right, bottom))
 
 		return img, lbl
 

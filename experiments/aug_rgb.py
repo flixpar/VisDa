@@ -69,7 +69,7 @@ class Trainer():
 		return scheduler
 
 	def get_dataloader(self):
-		dataset = GTA5AugDataset(im_size=self.args.img_size, samples=None)
+		dataset = GTA5AugDataset(im_size=self.args.img_size, samples=None, batch_size=self.args.batch_size)
 		dataloader = data.DataLoader(dataset, batch_size=self.args.batch_size, shuffle=False, num_workers=8, drop_last=True)
 		return dataset, dataloader
 

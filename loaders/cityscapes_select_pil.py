@@ -1,5 +1,5 @@
 import torch
-from torch import transforms
+import torchvision.transforms.functional as transforms
 from torch.utils import data
 
 from PIL import Image
@@ -32,8 +32,8 @@ class CityscapesSelectDataset(data.Dataset):
 		self.label_fnlist = [fn.replace("img", "lbl") for fn in self.image_fnlist]
 
 		self.num_classes = cityscapes.num_classes
-		self.img_mean = np.flip(cityscapes.img_mean, 0)
-		self.img_stdev = np.flip(cityscapes.img_stdev, 0)
+		self.img_mean = np.flip(cityscapes.img_mean, 0) / 255
+		self.img_stdev = np.flip(cityscapes.img_stdev, 0) / 255
 
 		self.size = len(self.image_fnlist)
 		self.img_size = im_size
@@ -48,19 +48,23 @@ class CityscapesSelectDataset(data.Dataset):
 		name = img_fn.split('/')[-1].split('_')[0]
 
 		src_img = Image.open(img_fn)
-		src_lbl = Image.open(lbl_fn, 0)
+		src_lbl = Image.open(lbl_fn)
 
 		src_img = self.enhance_contrast(src_img)
 		src_lbl = self.transform_labels(src_lbl)
 
 		size = (self.img_size[1], self.img_size[0])
-		img = img.resize(size, resample=Image.LANCZOS)
-		lbl = lbl.resize(size, resample=Image.NEAREST)
+		img = src_img.resize(size, resample=Image.LANCZOS)
+		lbl = src_lbl.resize(size, resample=Image.NEAREST)
 
-		img = transforms.ToTensor(img)
-		lbl = transforms.ToTensor(lbl)
+		img = transforms.to_tensor(img)
+		lbl = transforms.to_tensor(lbl)
 
-		img = transforms.functional.normalize(img, self.img_mean, self.img_stdev)
+		img = transforms.normalize(img, self.img_mean, self.img_stdev)
+		lbl = torch.squeeze(lbl.type(torch.LongTensor))
+
+		src_img = np.asarray(src_img)
+		src_lbl = np.asarray(src_lbl)
 
 		return (img, lbl), (src_img, src_lbl), name
 
@@ -69,7 +73,7 @@ class CityscapesSelectDataset(data.Dataset):
 
 	def transform_labels(self, lbl):
 		lbl = np.array(lbl)
-		out = np.zeros((lbl.shape[0], lbl.shape[1]))
+		out = np.zeros((lbl.shape[0], lbl.shape[1]), dtype=np.uint8)
 
 		for i in range(self.num_classes):
 			n = cityscapes.trainId2label[i].id
