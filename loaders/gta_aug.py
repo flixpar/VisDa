@@ -98,8 +98,8 @@ class GTA5AugDataset(data.Dataset):
 			startx = random.randint(0, scale_size[1] - crop_size[1])
 			starty = random.randint(0, scale_size[0] - crop_size[0])
 
-			img = transforms.functional.crop(img, startx, starty, crop_size[1], crop_size[0])
-			lbl = transforms.functional.crop(lbl, startx, starty, crop_size[1], crop_size[0])
+			img = transforms.crop(img, startx, starty, crop_size[1], crop_size[0])
+			lbl = transforms.crop(lbl, startx, starty, crop_size[1], crop_size[0])
 
 		if factor < 1.0:
 
@@ -112,8 +112,8 @@ class GTA5AugDataset(data.Dataset):
 			left = dw//2 if dw%2==0 else (dw//2)+1
 			right = dw//2
 
-			img = transforms.functional.pad(img, (left, top, right, bottom))
-			lbl = transforms.functional.pad(lbl, (left, top, right, bottom))
+			img = transforms.pad(img, (left, top, right, bottom))
+			lbl = transforms.pad(lbl, (left, top, right, bottom))
 
 		return img, lbl
 
