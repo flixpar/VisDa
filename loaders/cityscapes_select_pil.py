@@ -48,17 +48,17 @@ class CityscapesSelectDataset(data.Dataset):
 		name = img_fn.split('/')[-1].split('_')[0]
 
 		src_img = Image.open(img_fn)
-		src_lbl = Image.open(lbl_fn)
+		src_lbl = cv2.imread(lbl_fn, 0)
 
 		src_img = self.enhance_contrast(src_img)
 		src_lbl = self.transform_labels(src_lbl)
 
 		size = (self.img_size[1], self.img_size[0])
 		img = src_img.resize(size, resample=Image.LANCZOS)
-		lbl = src_lbl.resize(size, resample=Image.NEAREST)
+		lbl = cv2.resize(src_lbl, size, interpolation=cv2.INTER_NEAREST)
 
 		img = transforms.to_tensor(img)
-		lbl = transforms.to_tensor(lbl)
+		lbl = torch.from_numpy(lbl)
 
 		img = transforms.normalize(img, self.img_mean, self.img_stdev)
 		lbl = torch.squeeze(lbl.type(torch.LongTensor))
@@ -79,7 +79,7 @@ class CityscapesSelectDataset(data.Dataset):
 			n = cityscapes.trainId2label[i].id
 			out[lbl == n] = i
 
-		return Image.fromarray(out)
+		return out # Image.fromarray(out)
 
 	def get_original(self, index):
 		img_fn = self.image_fnlist[index]
@@ -93,7 +93,6 @@ class CityscapesSelectDataset(data.Dataset):
 		return img, lbl
 
 	def enhance_contrast(self, img):
-		img = np.array(img)
 		img = equalize_adapthist(img)
 		img = rescale_intensity(img, out_range='uint8').astype(np.uint8)
 		img = Image.fromarray(img)
