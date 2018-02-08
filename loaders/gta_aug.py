@@ -2,8 +2,9 @@ import torch
 import torchvision.transforms.functional as transforms
 from torch.utils import data
 
-from PIL import Image
+import cv2
 import numpy as np
+from PIL import Image
 
 import os
 import glob
@@ -61,29 +62,26 @@ class GTA5AugDataset(data.Dataset):
 		lbl_fn = self.label_fnlist[img_num]
 
 		img = Image.open(img_fn)
-		lbl = Image.open(lbl_fn)
+		lbl = cv2.imread(lbl_fn)
 
 		img, lbl = self.scale(img, lbl, scale_factor)
 		lbl = self.transform_labels(lbl)
 		
 		img = transforms.to_tensor(img)
-		lbl = transforms.to_tensor(lbl)
+		lbl = torch.from_numpy(lbl).type(torch.LongTensor)
 
 		img = transforms.normalize(img, self.img_mean, self.img_stdev)
-		lbl = torch.squeeze(lbl.type(torch.LongTensor))
 
 		return img, lbl
 
 	def transform_labels(self, lbl_img):
-		lbl_img = np.array(lbl_img)
 		out = np.zeros((lbl_img.shape[0], lbl_img.shape[1]), dtype=np.uint8)
 
 		for lbl in visda.labels:
 			if lbl.trainId in visda.ignore_labels: continue
-			color = np.flip(lbl.color, 0)
-			out[np.where(np.all(lbl_img == color, axis=-1))] = lbl.trainId
+			out[np.where(np.all(lbl_img == lbl.color, axis=-1))] = lbl.trainId
 
-		return Image.fromarray(out)
+		return out
 
 	def scale(self, img, lbl, factor):
 
@@ -91,7 +89,7 @@ class GTA5AugDataset(data.Dataset):
 		crop_size  = (self.img_size[1], self.img_size[0])
 
 		img = img.resize(scale_size, resample=Image.LANCZOS)
-		lbl = lbl.resize(scale_size, resample=Image.NEAREST)
+		lbl = cv2.resize(lbl, scale_size, interpolation=cv2.INTER_NEAREST)
 
 		if factor > 1.0:
 
@@ -99,7 +97,7 @@ class GTA5AugDataset(data.Dataset):
 			starty = random.randint(0, scale_size[0] - crop_size[0])
 
 			img = transforms.crop(img, startx, starty, crop_size[1], crop_size[0])
-			lbl = transforms.crop(lbl, startx, starty, crop_size[1], crop_size[0])
+			lbl = lbl[startx:endx, starty:endy]
 
 		if factor < 1.0:
 
@@ -113,7 +111,7 @@ class GTA5AugDataset(data.Dataset):
 			right = dw//2
 
 			img = transforms.pad(img, (left, top, right, bottom))
-			lbl = transforms.pad(lbl, (left, top, right, bottom))
+			lbl = cv2.copyMakeBorder(lbl, top, bottom, left, right, borderType=cv2.BORDER_CONSTANT, value=0)
 
 		return img, lbl
 

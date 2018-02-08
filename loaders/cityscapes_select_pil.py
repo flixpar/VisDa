@@ -79,7 +79,7 @@ class CityscapesSelectDataset(data.Dataset):
 			n = cityscapes.trainId2label[i].id
 			out[lbl == n] = i
 
-		return out # Image.fromarray(out)
+		return out
 
 	def get_original(self, index):
 		img_fn = self.image_fnlist[index]
@@ -93,6 +93,7 @@ class CityscapesSelectDataset(data.Dataset):
 		return img, lbl
 
 	def enhance_contrast(self, img):
+		img = np.array(img)
 		img = equalize_adapthist(img)
 		img = rescale_intensity(img, out_range='uint8').astype(np.uint8)
 		img = Image.fromarray(img)
