@@ -11,6 +11,7 @@ from tqdm import tqdm
 
 from models.gcn import				GCN
 from models.gcn_densenet import 	GCN_DENSENET
+from models.gcn_nas import 			GCN_NASNET
 from models.gcn_deconv import 		GCN_DECONV
 from models.gcn_psp import 			GCN_PSP
 from models.gcn_comb import 		GCN_COMBINED
@@ -72,20 +73,14 @@ class Basic(Trainer):
 		super(Basic, self).__init__()
 
 	def get_model(self, dataset):
-		if self.args.model=="GCN":
-			model = GCN(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
-		elif self.args.model=="UNet":
-			model = UNet(dataset.num_classes).cuda()
-		elif self.args.model=="GCN_DENSENET":
-			model = GCN_DENSENET(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
-		elif self.args.model=="GCN_DECONV":
-			model = GCN_DECONV(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
-		elif self.args.model=="GCN_PSP":
-			model = GCN_PSP(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
-		elif self.args.model=="GCN_COMB":
-			model = GCN_COMBINED(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
-		else:
-			raise ValueError("Invalid model arg.")
+		if self.args.model  =="GCN":			model = GCN(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
+		elif self.args.model=="GCN_DENSENET":	model = GCN_DENSENET(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
+		elif self.args.model=="GCN_NAS":		model = GCN_NASNET(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
+		elif self.args.model=="GCN_DECONV":		model = GCN_DECONV(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
+		elif self.args.model=="GCN_PSP":		model = GCN_PSP(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
+		elif self.args.model=="GCN_COMB":		model = GCN_COMBINED(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
+		elif self.args.model=="UNet":			model = UNet(dataset.num_classes).cuda()
+		else: raise ValueError("Invalid model arg.")
 
 		start_epoch = 0
 		if self.args.resume:
@@ -105,7 +100,7 @@ class Basic(Trainer):
 		return scheduler
 
 	def get_dataloader(self):
-		dataset = VisDaDataset(im_size=self.args.img_size, samples=64)
+		dataset = VisDaDataset(im_size=self.args.img_size, samples=None)
 		dataloader = data.DataLoader(dataset, batch_size=self.args.batch_size, shuffle=True, num_workers=8, drop_last=True)
 		return dataset, dataloader
 
