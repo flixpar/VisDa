@@ -3,6 +3,13 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.autograd import Variable
 
+import os
+from math import floor
+import yaml
+
+from util.setup import load_args
+args = load_args(os.getcwd())
+
 ################### GCN ######################
 
 class _GlobalConvModule(nn.Module):
@@ -43,8 +50,8 @@ class _BoundaryRefineModule(nn.Module):
 class _LearnedBilinearDeconvModule(nn.Module):
 	def __init__(self, channels):
 		super(_LearnedBilinearDeconvModule, self).__init__()
-		self.deconv = nn.ConvTranspose2d(channels, channels, kernel_size=8, stride=4, padding=2)
-		self.deconv.weight.data = self.make_bilinear_weights(8, channels)
+		self.deconv = nn.ConvTranspose2d(channels, channels, kernel_size=4, stride=2, padding=1)
+		self.deconv.weight.data = self.make_bilinear_weights(4, channels)
 		self.deconv.bias.data.zero_()
 
 	def forward(self, x):
@@ -73,15 +80,15 @@ class GCN_NASNET(nn.Module):
 		self.K = k
 		self.input_size = input_size
 
-		nasnet_path = os.path.join(pretrained_dir, 'nasnetalarge.pth')
+		nasnet_path = os.path.join(args.paths["pretrained_models_path"], 'nasnetalarge.pth')
 
-		nasnet = NASNetALarge()
-		nasnet.load_state_dict(torch.load(nasnet_path))
+		self.nasnet = NASNetALarge()
+		self.nasnet.load_state_dict(torch.load(nasnet_path))
 
-		self.gcm1 = _GlobalConvModule(2208, num_classes, (self.K, self.K))
-		self.gcm2 = _GlobalConvModule(2112, num_classes, (self.K, self.K))
-		self.gcm3 = _GlobalConvModule(768, num_classes, (self.K, self.K))
-		self.gcm4 = _GlobalConvModule(384, num_classes, (self.K, self.K))
+		self.gcm1 = _GlobalConvModule(4032, num_classes, (self.K, self.K))
+		self.gcm2 = _GlobalConvModule(2016, num_classes, (self.K, self.K))
+		self.gcm3 = _GlobalConvModule(1008, num_classes, (self.K, self.K))
+		self.gcm4 = _GlobalConvModule(num_classes, num_classes, (self.K, self.K))
 
 		self.brm1 = _BoundaryRefineModule(num_classes)
 		self.brm2 = _BoundaryRefineModule(num_classes)
@@ -90,50 +97,52 @@ class GCN_NASNET(nn.Module):
 		self.brm5 = _BoundaryRefineModule(num_classes)
 		self.brm6 = _BoundaryRefineModule(num_classes)
 		self.brm7 = _BoundaryRefineModule(num_classes)
+		self.brm8 = _BoundaryRefineModule(num_classes)
 
 		self.deconv = _LearnedBilinearDeconvModule(num_classes)
 
-		initialize_weights(self.gcm1, self.gcm2, self.gcm3, self.brm1, self.brm2, self.brm3, self.brm4, self.brm5, self.brm6, self.brm7)
+		initialize_weights(self.gcm1, self.gcm2, self.gcm3, self.gcm4, self.brm1, self.brm2, self.brm3, self.brm4, self.brm5, self.brm6, self.brm7, self.brm8)
 
 	def forward(self, x):
 
-		x_conv0 = self.conv0(x)
-		x_stem_0 = self.cell_stem_0(x_conv0)
-		x_stem_1 = self.cell_stem_1(x_conv0, x_stem_0)
+		x_conv0  = self.nasnet.conv0(x)
+		x_stem_0 = self.nasnet.cell_stem_0(x_conv0)
+		x_stem_1 = self.nasnet.cell_stem_1(x_conv0, x_stem_0)
 
-		x_cell_0 = nasnet.cell_0(x_stem_1, x_stem_0)
-		x_cell_1 = nasnet.cell_1(x_cell_0, x_stem_1)
-		x_cell_2 = nasnet.cell_2(x_cell_1, x_cell_0)
-		x_cell_3 = nasnet.cell_3(x_cell_2, x_cell_1)
-		x_cell_4 = nasnet.cell_4(x_cell_3, x_cell_2)
-		x_cell_5 = nasnet.cell_5(x_cell_4, x_cell_3)
+		x_cell_0 = self.nasnet.cell_0(x_stem_1, x_stem_0)
+		x_cell_1 = self.nasnet.cell_1(x_cell_0, x_stem_1)
+		x_cell_2 = self.nasnet.cell_2(x_cell_1, x_cell_0)
+		x_cell_3 = self.nasnet.cell_3(x_cell_2, x_cell_1)
+		x_cell_4 = self.nasnet.cell_4(x_cell_3, x_cell_2)
+		x_cell_5 = self.nasnet.cell_5(x_cell_4, x_cell_3)
 
-		x_reduction_cell_0 = nasnet.reduction_cell_0(x_cell_5, x_cell_4)
+		x_reduction_cell_0 = self.nasnet.reduction_cell_0(x_cell_5, x_cell_4)
 
-		x_cell_6  = nasnet.cell_6(x_reduction_cell_0, x_cell_4)
-		x_cell_7  = nasnet.cell_7(x_cell_6, x_reduction_cell_0)
-		x_cell_8  = nasnet.cell_8(x_cell_7, x_cell_6)
-		x_cell_9  = nasnet.cell_9(x_cell_8, x_cell_7)
-		x_cell_10 = nasnet.cell_10(x_cell_9, x_cell_8)
-		x_cell_11 = nasnet.cell_11(x_cell_10, x_cell_9)
+		x_cell_6  = self.nasnet.cell_6(x_reduction_cell_0, x_cell_4)
+		x_cell_7  = self.nasnet.cell_7(x_cell_6, x_reduction_cell_0)
+		x_cell_8  = self.nasnet.cell_8(x_cell_7, x_cell_6)
+		x_cell_9  = self.nasnet.cell_9(x_cell_8, x_cell_7)
+		x_cell_10 = self.nasnet.cell_10(x_cell_9, x_cell_8)
+		x_cell_11 = self.nasnet.cell_11(x_cell_10, x_cell_9)
 
-		x_reduction_cell_1 = nasnet.reduction_cell_1(x_cell_11, x_cell_10)
+		x_reduction_cell_1 = self.nasnet.reduction_cell_1(x_cell_11, x_cell_10)
 
-		x_cell_12 = nasnet.cell_12(x_reduction_cell_1, x_cell_10)
-		x_cell_13 = nasnet.cell_13(x_cell_12, x_reduction_cell_1)
-		x_cell_14 = nasnet.cell_14(x_cell_13, x_cell_12)
-		x_cell_15 = nasnet.cell_15(x_cell_14, x_cell_13)
-		x_cell_16 = nasnet.cell_16(x_cell_15, x_cell_14)
-		x_cell_17 = nasnet.cell_17(x_cell_16, x_cell_15)
+		x_cell_12 = self.nasnet.cell_12(x_reduction_cell_1, x_cell_10)
+		x_cell_13 = self.nasnet.cell_13(x_cell_12, x_reduction_cell_1)
+		x_cell_14 = self.nasnet.cell_14(x_cell_13, x_cell_12)
+		x_cell_15 = self.nasnet.cell_15(x_cell_14, x_cell_13)
+		x_cell_16 = self.nasnet.cell_16(x_cell_15, x_cell_14)
+		x_cell_17 = self.nasnet.cell_17(x_cell_16, x_cell_15)
 
-		gcfm1 = self.brm1(self.gcm1(x_cell_5))
+		gcfm1 = self.brm1(self.gcm1(x_cell_17))
 		gcfm2 = self.brm2(self.gcm2(x_cell_11))
-		gcfm3 = self.brm3(self.gcm3(x_cell_17))
+		gcfm3 = self.brm3(self.gcm3(x_cell_5))
 
 		fs1 = self.brm4(self.deconv(gcfm1) + gcfm2)
 		fs2 = self.brm5(self.deconv(fs1) + gcfm3)
 		fs3 = self.brm6(self.deconv(fs2))
-		out = self.brm7(self.deconv(fs3))
+		fs4 = self.brm7(self.deconv(fs3))
+		out = self.brm8(self.deconv(self.gcm4(fs4)))
 
 		return out
 
