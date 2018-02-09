@@ -56,6 +56,8 @@ class Trainer():
 			model = GCN_PSP(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
 		elif self.args.model=="GCN_COMB":
 			model = GCN_COMBINED(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
+		elif self.args.model=="GCN_RESNEXT":
+			model = GCN_RESNEXT(dataset.num_classes, k=self.args.K).cuda()
 		else:
 			raise ValueError("Invalid model arg.")
 

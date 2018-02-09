@@ -15,6 +15,7 @@ from models.gcn_nas import 			GCN_NASNET
 from models.gcn_deconv import 		GCN_DECONV
 from models.gcn_psp import 			GCN_PSP
 from models.gcn_comb import 		GCN_COMBINED
+from models.gcn_resnext import 		GCN_RESNEXT
 from models.unet import 			UNet
 
 from loaders.visda import VisDaDataset
@@ -79,6 +80,7 @@ class Basic(Trainer):
 		elif self.args.model=="GCN_DECONV":		model = GCN_DECONV(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
 		elif self.args.model=="GCN_PSP":		model = GCN_PSP(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
 		elif self.args.model=="GCN_COMB":		model = GCN_COMBINED(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
+		elif self.args.model=="GCN_RESNEXT":	model = GCN_RESNEXT(dataset.num_classes, k=self.args.K).cuda()
 		elif self.args.model=="UNet":			model = UNet(dataset.num_classes).cuda()
 		else: raise ValueError("Invalid model arg.")
 

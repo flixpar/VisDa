@@ -193,6 +193,7 @@ if __name__ == "__main__":
 	elif args.model=="GCN_DECONV":		model = GCN_DECONV(cityscapes.num_classes, args.img_size, k=args.K).cuda()
 	elif args.model=="GCN_PSP":			model = GCN_PSP(cityscapes.num_classes, args.img_size, k=args.K).cuda()
 	elif args.model=="GCN_COMB":		model = GCN_COMBINED(cityscapes.num_classes, args.img_size).cuda()
+	elif args.model=="GCN_RESNEXT":		model = GCN_RESNEXT(dataset.num_classes, k=self.args.K).cuda()
 	elif args.model=="UNet":			model = UNet(cityscapes.num_classes).cuda()
 	elif args.model=="PSPNet":			model = PSPNet(cityscapes.num_classes, args.img_size).cuda()
 	else: raise ValueError("Invalid model arg.")
