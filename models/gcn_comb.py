@@ -148,13 +148,9 @@ class GCN_COMBINED(nn.Module):
 		self.brm8 = _BoundaryRefineModule(num_classes)
 		self.brm9 = _BoundaryRefineModule(num_classes)
 
-		self.deconv1 = _LearnedBilinearDeconvModule(num_classes)
-		self.deconv2 = _LearnedBilinearDeconvModule(num_classes)
-		self.deconv3 = _LearnedBilinearDeconvModule(num_classes)
-		self.deconv4 = _LearnedBilinearDeconvModule(num_classes)
-		self.deconv5 = _LearnedBilinearDeconvModule(num_classes)
+		self.deconv = _LearnedBilinearDeconvModule(num_classes)
 
-		self.psp = _PyramidPoolingModule(num_classes, 10, input_size, levels=(1, 2, 3, 6, 9))
+		self.psp = _PyramidPoolingModule(num_classes, 12, input_size, levels=(1, 2, 3, 6, 9))
 		self.final = nn.Sequential(
 			nn.Conv2d(num_classes + self.psp.out_channels, num_classes, kernel_size=3, padding=1),
 			nn.BatchNorm2d(num_classes),
@@ -179,11 +175,11 @@ class GCN_COMBINED(nn.Module):
 		gcfm3 = self.brm3(self.gcm3(fm2))
 		gcfm4 = self.brm4(self.gcm4(fm1))
 
-		fs1 = self.brm5(self.deconv1(gcfm1) + gcfm2)
-		fs2 = self.brm6(self.deconv2(fs1) + gcfm3)
-		fs3 = self.brm7(self.deconv3(fs2) + gcfm4)
-		fs4 = self.brm8(self.deconv4(fs3))
-		fs5 = self.brm9(self.deconv5(fs4))
+		fs1 = self.brm5(self.deconv(gcfm1) + gcfm2)
+		fs2 = self.brm6(self.deconv(fs1) + gcfm3)
+		fs3 = self.brm7(self.deconv(fs2) + gcfm4)
+		fs4 = self.brm8(self.deconv(fs3))
+		fs5 = self.brm9(self.deconv(fs4))
 
 		ppm = torch.cat([self.psp(fs5), fs5], 1)
 		out = self.final(ppm)
