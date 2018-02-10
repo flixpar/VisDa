@@ -32,8 +32,8 @@ class GTA5AugDataset(data.Dataset):
 		self.num_images = len(self.image_fnlist)
 
 		self.num_classes = visda.num_classes
-		self.img_mean = np.flip(visda.img_mean, 0) / 255
-		self.img_stdev = np.flip(visda.img_stdev, 0) / 255
+		self.img_mean = np.flip(visda.img_mean, 0)
+		self.img_stdev = np.flip(visda.img_stdev, 0)
 
 		class_weights = -1 * np.log(np.array(visda.class_weights))
 		class_weights /= np.max(class_weights)
@@ -58,19 +58,25 @@ class GTA5AugDataset(data.Dataset):
 		aug_pos = block_pos // self.batch_size
 		scale_factor = self.scale_factors[aug_pos]
 
+		if img_num >= self.num_images:
+			img_num = random.randint(0, self.num_images-1)
+
 		img_fn = self.image_fnlist[img_num]
 		lbl_fn = self.label_fnlist[img_num]
 
-		img = Image.open(img_fn)
+		img = cv2.imread(img_fn)
 		lbl = cv2.imread(lbl_fn)
+
+		img = cv2.cvtColor(img, cv2.BGR2RGB)
 
 		img, lbl = self.scale(img, lbl, scale_factor)
 		lbl = self.transform_labels(lbl)
-		
-		img = transforms.to_tensor(img)
-		lbl = torch.from_numpy(lbl).type(torch.LongTensor)
 
-		img = transforms.normalize(img, self.img_mean, self.img_stdev)
+		img = img - self.img_mean
+		img /= self.img_stdev
+		
+		img = torch.from_numpy(img).type(torch.FloatTensor)
+		lbl = torch.from_numpy(lbl).type(torch.LongTensor)
 
 		return img, lbl
 
@@ -88,7 +94,7 @@ class GTA5AugDataset(data.Dataset):
 		scale_size = (int(factor * self.img_size[1]), int(factor * self.img_size[0]))
 		crop_size  = (self.img_size[1], self.img_size[0])
 
-		img = img.resize(scale_size, resample=Image.LANCZOS)
+		img = cv2.resize(img, scale_size, interpolation=cv2.INTER_CUBIC)
 		lbl = cv2.resize(lbl, scale_size, interpolation=cv2.INTER_NEAREST)
 
 		if factor > 1.0:
@@ -96,7 +102,10 @@ class GTA5AugDataset(data.Dataset):
 			startx = random.randint(0, scale_size[1] - crop_size[1])
 			starty = random.randint(0, scale_size[0] - crop_size[0])
 
-			img = transforms.crop(img, startx, starty, crop_size[1], crop_size[0])
+			endx = startx + crop_size[1]
+			endy = starty + crop_size[0]
+
+			img = img[startx:endx, starty:endy]
 			lbl = lbl[startx:endx, starty:endy]
 
 		if factor < 1.0:
@@ -110,7 +119,7 @@ class GTA5AugDataset(data.Dataset):
 			left = dw//2 if dw%2==0 else (dw//2)+1
 			right = dw//2
 
-			img = transforms.pad(img, (left, top, right, bottom))
+			img = cv2.copyMakeBorder(img, top, bottom, left, right, borderType=cv2.BORDER_CONSTANT, value=0)
 			lbl = cv2.copyMakeBorder(lbl, top, bottom, left, right, borderType=cv2.BORDER_CONSTANT, value=0)
 
 		return img, lbl
