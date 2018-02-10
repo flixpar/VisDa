@@ -24,7 +24,7 @@ import util.cityscapes_helper as cityscapes
 
 class CityscapesDataset(data.Dataset):
 
-	def __init__(self, im_size=cityscapes.shape, mode="val", col_mode="bgr"):
+	def __init__(self, im_size=cityscapes.shape, mode="val"):
 		self.image_fnlist = glob.glob(os.path.join(paths["cityscapes_path"], "images", mode, "**", "*.png"), recursive=True)
 		self.label_fnlist = [fn.replace("images", "annotations").replace("leftImg8bit", "gtFine_labelIds") for fn in self.image_fnlist]
 
@@ -54,6 +54,8 @@ class CityscapesDataset(data.Dataset):
 		src_img = cv2.imread(img_fn)
 		src_lbl = cv2.imread(lbl_fn, 0)
 
+		src_img = cv2.cvtColor(src_img, cv2.IMAGE_BGR2RGB)
+
 		src_img = self.enhance_contrast(src_img)
 		src_lbl = self.transform_labels(src_lbl)
 
@@ -61,15 +63,10 @@ class CityscapesDataset(data.Dataset):
 		img = cv2.resize(src_img.copy(), size, interpolation=cv2.INTER_AREA)
 		lbl = cv2.resize(src_lbl.copy(), size, interpolation=cv2.INTER_NEAREST)
 
-		if self.color_mode == "rgb":
-			img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-			img = img - np.flip(self.img_mean, 0)
-			img /= np.flip(self.img_stdev, 0)
-		else:
-			img = img - self.img_mean
-			img /= self.img_stdev
+		img = img - np.flip(self.img_mean, 0)
+		img /= np.flip(self.img_stdev, 0)
 
-		img = torch.from_numpy(img).permute(2, 0, 1).type(torch.FloatTensor)
+		img = torch.from_numpy(img).permute(2,0,1).type(torch.FloatTensor)
 		lbl = torch.from_numpy(lbl).type(torch.LongTensor)
 
 		return (img, lbl)
@@ -98,8 +95,6 @@ class CityscapesDataset(data.Dataset):
 		return (img, lbl)
 
 	def enhance_contrast(self, img):
-		img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 		img = equalize_adapthist(img)
-		img = rescale_intensity(img, out_range='uint8').astype(np.uint8)
-		img = cv2.cvtColor(img, cv2.COLOR_RGB2BGR)
+		img = rescale_intensity(img, out_range='uint8')
 		return img
