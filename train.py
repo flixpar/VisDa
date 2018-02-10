@@ -7,6 +7,7 @@ from experiments import		basic
 from experiments import 	aug
 from experiments import 	pspnet
 from experiments import		aug_rgb
+from experiments import		cityscapes
 
 def main(args):
 	config = setup.load_args(os.getcwd())
@@ -30,6 +31,8 @@ def get_experiment(name, config):
 		experiment = pspnet.TrainPSPNet(config)
 	elif name == "aug_rgb":
 		experiment = aug_rgb.Trainer(config)
+	elif name == "cityscapes":
+		experiment = cityscapes.Basic(config)
 	else:
 		raise ValueError("Invalid experiment name.")
 
