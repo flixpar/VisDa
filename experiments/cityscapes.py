@@ -18,7 +18,7 @@ from models.gcn_comb import 		GCN_COMBINED
 from models.gcn_resnext import 		GCN_RESNEXT
 from models.unet import 			UNet
 
-from loaders.cityscapes import CityscapesDataset
+from loaders.cityscapes_full import CityscapesDataset
 from loaders.cityscapes_select import CityscapesSelectDataset
 
 from eval import Evaluator
