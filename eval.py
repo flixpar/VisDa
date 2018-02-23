@@ -110,7 +110,7 @@ class Evaluator:
 		return scores.final_scores()
 
 	def predict(self, model, img):
-		img = Variable(img.cuda())
+		img = Variable(img.cuda(), volatile=True)
 		output = model(img)
 		pred = F.softmax(output, dim=1).cpu()
 		return pred

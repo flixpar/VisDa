@@ -47,14 +47,24 @@ class Evaluator:
 			image		= l[0]
 			name		= l[1][0]
 
-			# inference on image
-			pred = self.predict(model, image)
-			pred = self.upsample(pred)
-
 			# augment with flip
 			img_flip = self.flip_tensor(image, 3)
-			pred_flip = self.predict(model, img_flip)
+
+			# prepare data
+			img = Variable(img.cuda(), volatile=True)
+			img_flip = Variable(img_flip.cuda(), volatile=True)
+
+			# inference on original
+			output = model(img)
+			pred = F.softmax(output, dim=1).cpu()
+			pred = self.upsample(pred)
+
+			# inference on flipped
+			output = model(img_flip)
+			pred_flip = F.softmax(output, dim=1).cpu()
 			pred_flip = self.upsample(pred_flip)
+
+			# merge predictions
 			pred_flip = np.flip(pred_flip, 2)
 			pred = (pred/pred.mean()) + (pred_flip/pred_flip.mean())
 
@@ -64,13 +74,6 @@ class Evaluator:
 			# save output image
 			pred_out = self.recolor(pred)
 			cv2.imwrite(pred_out, name)
-			
-
-	def predict(self, model, img):
-		img = Variable(img.cuda())
-		output = model(img)
-		pred = F.softmax(output, dim=1).cpu()
-		return pred
 
 	def upsample(self, img):
 		size = self.dataset.default_size
