@@ -16,12 +16,11 @@ args = load_args(os.getcwd())
 paths = args.paths
 
 root_dir = paths["data_train_path"]
-sys.path.append(paths["project_path"])
 
 
 class VisDaDataset(data.Dataset):
 
-	def __init__(self, im_size=visda.shape, mode="train", samples=None, color_mode="bgr"):
+	def __init__(self, im_size=visda.shape, samples=None):
 		self.image_fnlist = glob.glob(os.path.join(root_dir, "images", "*.png"))
 
 		if samples is not None:
@@ -29,18 +28,18 @@ class VisDaDataset(data.Dataset):
 
 		self.label_fnlist = [fn.replace("images", "annotations") for fn in self.image_fnlist]
 
-		self.num_classes = visda.num_classes
+		self.num_classes = visda.num_classes - 1
 		self.img_mean = visda.img_mean
 		self.img_stdev = visda.img_stdev
 
 		class_weights = -1 * np.log(np.array(visda.class_weights))
 		class_weights /= np.max(class_weights)
+		class_weights = class_weights[1:]
 		self.class_weights = torch.FloatTensor(class_weights)
 
-		self.size = len(self.image_fnlist)
+		self.length = len(self.image_fnlist)
 		self.img_size = im_size
 		self.default_size = visda.shape
-		self.color_mode = color_mode
 
 	def __getitem__(self, index):
 		img_fn = self.image_fnlist[index]
@@ -55,13 +54,8 @@ class VisDaDataset(data.Dataset):
 
 		lbl = transform_labels(lbl)
 
-		if self.color_mode == "rgb":
-			img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-			img = img - np.flip(self.img_mean, 0)
-			img /= np.flip(self.img_stdev, 0)
-		else:
-			img = img - self.img_mean
-			img /= self.img_stdev
+		img = img - self.img_mean
+		img /= self.img_stdev
 
 		img = torch.from_numpy(img).permute(2, 0, 1).type(torch.FloatTensor)
 		lbl = torch.from_numpy(lbl).type(torch.LongTensor)
@@ -69,7 +63,7 @@ class VisDaDataset(data.Dataset):
 		return (img, lbl)
 
 	def __len__(self):
-		return self.size
+		return self.length
 
 	def get_original(self, index):
 		img_fn = self.image_fnlist[index]
@@ -90,7 +84,7 @@ def transform_labels(lbl_img):
 	out = np.zeros((lbl_img.shape[0], lbl_img.shape[1]))
 
 	for lbl in visda.labels:
-		if lbl.trainId in visda.ignore_labels: continue
-		out[np.where(np.all(lbl_img == lbl.color, axis=-1))] = lbl.trainId
+		c = lbl.trainId-1 if lbl.trainId != 0 else 255
+		out[np.where(np.all(lbl_img == lbl.color, axis=-1))] = c
 
 	return out
