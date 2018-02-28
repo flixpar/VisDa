@@ -1,23 +1,23 @@
 {
     model: "GCN",
-    optimizer: "SGD",
+    optimizer: "Adam",
 
-    max_epochs: 12,
-    batch_size: 4,
+    max_epochs: 15,
+    batch_size: 2,
 
     lr: 0.00002,
     weight_decay: 0.0005,
-    momentum: 0.98,
+    momentum: 0.99,
 
-    K: 17,
+    K: 11,
 
-    scale_factor: 0.55,
+    scale_factor: 0.45,
     default_img_size: !!python/tuple [1052, 1914],
 
     lr_decay: True,
     scheduler: "poly",
     lr_decay_freq: 1,
-    lr_decay_power: 0.9,
+    lr_decay_power: 0.85,
 
     eval_freq: 5000,
     eval_samples: 25,
@@ -30,6 +30,7 @@
         data_base_path: "/media/data/",
         data_train_path: "/media/data/train/",
         cityscapes_path: "/media/data/cityscapes/",
+        cityscapes_coarse_path: "/media/data/cityscapes_coarse/",
         cityscapes_val_path: "/media/data/cityscapes_eval/",
         pretrained_models_path: "/media/data/pretrained/"
     }
