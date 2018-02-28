@@ -80,7 +80,7 @@ class _DeconvModule(nn.Module):
 
 class GCN_RESNEXT(nn.Module):
 
-	def __init__(self, num_classes, k=7):
+	def __init__(self, num_classes, input_size, k=7):
 		super(GCN_RESNEXT, self).__init__()
 
 		self.num_classes = num_classes

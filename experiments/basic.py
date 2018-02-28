@@ -80,7 +80,7 @@ class Basic(Trainer):
 		elif self.args.model=="GCN_DECONV":		model = GCN_DECONV(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
 		elif self.args.model=="GCN_PSP":		model = GCN_PSP(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
 		elif self.args.model=="GCN_COMB":		model = GCN_COMBINED(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
-		elif self.args.model=="GCN_RESNEXT":	model = GCN_RESNEXT(dataset.num_classes, k=self.args.K).cuda()
+		elif self.args.model=="GCN_RESNEXT":	model = GCN_RESNEXT(dataset.num_classes, dataset.img_size, k=self.args.K).cuda()
 		elif self.args.model=="UNet":			model = UNet(dataset.num_classes).cuda()
 		else: raise ValueError("Invalid model arg.")
 
@@ -112,7 +112,7 @@ class Basic(Trainer):
 		return evaluator
 
 	def get_loss_func(self):
-		loss_func = CrossEntropyLoss2d(weight=self.dataset.class_weights).cuda()
+		loss_func = CrossEntropyLoss2d(weight=self.dataset.class_weights, ignore_index=255).cuda()
 		return loss_func
 
 	def get_config(self):
