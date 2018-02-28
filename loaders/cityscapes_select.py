@@ -8,6 +8,7 @@ import cv2
 from torch.utils import data
 from skimage.exposure import equalize_adapthist, rescale_intensity
 import skimage
+from torchvision import transforms
 
 import warnings
 warnings.filterwarnings("ignore", category=UserWarning)
@@ -27,15 +28,17 @@ class CityscapesSelectDataset(data.Dataset):
 		self.image_fnlist = sorted(glob.glob(os.path.join(data_dir, "*_img.png")))
 		self.label_fnlist = [fn.replace("img", "lbl") for fn in self.image_fnlist]
 
-		self.num_classes = cityscapes.num_classes
-		self.img_mean = cityscapes.img_mean
-		self.img_stdev = cityscapes.img_stdev
+		self.num_classes = cityscapes.num_classes - 1
+		self.img_mean = cityscapes.img_mean / 255.0
+		self.img_stdev = cityscapes.img_stdev / 255.0
 
 		self.size = len(self.image_fnlist)
 		self.img_size = im_size
 		self.default_size = cityscapes.shape
 
 		self.n_samples = n_samples
+
+		self.norm = transforms.Normalize(mean=self.img_mean, stf=self.img_stdev)
 
 	def __getitem__(self, index):
 		img_fn = self.image_fnlist[index]
@@ -53,11 +56,12 @@ class CityscapesSelectDataset(data.Dataset):
 		img = cv2.resize(src_img.copy(), size, interpolation=cv2.INTER_AREA)
 		lbl = cv2.resize(src_lbl.copy(), size, interpolation=cv2.INTER_NEAREST)
 
-		img = img - self.img_mean
-		img /= self.img_stdev
+		img = img.astype(np.float32) / 255.0
 
 		img = torch.from_numpy(img).permute(2, 0, 1).type(torch.FloatTensor)
 		lbl = torch.from_numpy(lbl).type(torch.LongTensor)
+
+		img = self.norm(img)
 
 		return (img, lbl), (src_img, src_lbl), name
 
