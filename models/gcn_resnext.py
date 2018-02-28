@@ -85,28 +85,38 @@ class GCN_RESNEXT(nn.Module):
 
 		self.num_classes = num_classes
 		self.K = k
+		num_imd_feats = 40
 
 		self.resnext = ResNeXt()
 
-		self.gcm1 = _GlobalConvModule(2048, num_classes, (self.K, self.K))
-		self.gcm2 = _GlobalConvModule(1024, num_classes, (self.K, self.K))
-		self.gcm3 = _GlobalConvModule(512, num_classes, (self.K, self.K))
-		self.gcm4 = _GlobalConvModule(256, num_classes, (self.K, self.K))
+		self.gcm1 = _GlobalConvModule(2048, num_imd_feats, (self.K, self.K))
+		self.gcm2 = _GlobalConvModule(1024, num_imd_feats, (self.K, self.K))
+		self.gcm3 = _GlobalConvModule(512, num_imd_feats, (self.K, self.K))
+		self.gcm4 = _GlobalConvModule(256, num_imd_feats, (self.K, self.K))
 
-		self.brm1 = _BoundaryRefineModule(num_classes)
-		self.brm2 = _BoundaryRefineModule(num_classes)
-		self.brm3 = _BoundaryRefineModule(num_classes)
-		self.brm4 = _BoundaryRefineModule(num_classes)
-		self.brm5 = _BoundaryRefineModule(num_classes)
-		self.brm6 = _BoundaryRefineModule(num_classes)
-		self.brm7 = _BoundaryRefineModule(num_classes)
-		self.brm8 = _BoundaryRefineModule(num_classes)
-		self.brm9 = _BoundaryRefineModule(num_classes)
+		self.brm1 = _BoundaryRefineModule(num_imd_feats)
+		self.brm2 = _BoundaryRefineModule(num_imd_feats)
+		self.brm3 = _BoundaryRefineModule(num_imd_feats)
+		self.brm4 = _BoundaryRefineModule(num_imd_feats)
+		self.brm5 = _BoundaryRefineModule(num_imd_feats)
+		self.brm6 = _BoundaryRefineModule(num_imd_feats)
+		self.brm7 = _BoundaryRefineModule(num_imd_feats)
+		self.brm8 = _BoundaryRefineModule(num_imd_feats)
+		self.brm9 = _BoundaryRefineModule(num_imd_feats)
 
-		self.deconv = _DeconvModule(num_classes)
+		self.deconv = _DeconvModule(num_imd_feats)
+
+		self.psp_module = _PyramidPoolingModule(int_channels, 30, input_size, levels=(1, 2, 3, 6))
+		self.final = nn.Sequential(
+			nn.Conv2d(num_imd_feats + self.psp_module.out_channels, num_imd_feats, kernel_size=3, padding=1),
+			nn.BatchNorm2d(num_imd_feats),
+			nn.ReLU(inplace=True),
+			nn.Conv2d(num_imd_feats, num_classes, kernel_size=1, padding=0)
+		)
 
 		self.initialize_weights(self.gcm1, self.gcm2, self.gcm3, self.gcm4)
 		self.initialize_weights(self.brm1, self.brm2, self.brm3, self.brm4, self.brm5, self.brm6, self.brm7, self.brm8, self.brm9)
+		self.initialize_weights(self.psp_module, self.final)
 
 	def forward(self, x):
 
@@ -125,7 +135,10 @@ class GCN_RESNEXT(nn.Module):
 		fs2 = self.brm6(self.deconv(fs1) + gcfm3)
 		fs3 = self.brm7(self.deconv(fs2) + gcfm4)
 		fs4 = self.brm8(self.deconv(fs3))
-		out = self.brm9(self.deconv(fs4))
+		fs5 = self.brm9(self.deconv(fs4))
+
+		p = torch.cat([self.psp_module(fs5), fs5], 1)
+		out = self.final(p)
 
 		return out
 
