@@ -1,4 +1,3 @@
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -76,6 +75,30 @@ class _DeconvModule(nn.Module):
 			w[i, i] = filt
 		return w
 
+class _PyramidSpatialPoolingModule(nn.Module):
+	def __init__(self, in_channels, down_channels, out_size, levels=(1, 2, 3, 6)):
+		super(_PyramidSpatialPoolingModule, self).__init__()
+
+		self.out_channels = len(levels) * down_channels
+
+		self.layers = nn.ModuleList()
+		for level in levels:
+			layer = nn.Sequential(
+				nn.AdaptiveAvgPool2d(level),
+				nn.Conv2d(in_channels, down_channels, kernel_size=1, padding=0, bias=False),
+				nn.BatchNorm2d(down_channels),
+				nn.ReLU(inplace=True),
+				nn.Upsample(size=out_size, mode='bilinear')
+			)
+			self.layers.append(layer)
+
+	def forward(self, x):
+
+		features = [layer(x) for layer in self.layers]
+		out = torch.cat(features, 1)
+
+		return out
+
 ############################## GCN #################################
 
 class GCN_RESNEXT(nn.Module):
@@ -106,7 +129,7 @@ class GCN_RESNEXT(nn.Module):
 
 		self.deconv = _DeconvModule(num_imd_feats)
 
-		self.psp_module = _PyramidPoolingModule(int_channels, 30, input_size, levels=(1, 2, 3, 6))
+		self.psp_module = _PyramidSpatialPoolingModule(num_imd_feats, 30, input_size, levels=(1, 2, 3, 6))
 		self.final = nn.Sequential(
 			nn.Conv2d(num_imd_feats + self.psp_module.out_channels, num_imd_feats, kernel_size=3, padding=1),
 			nn.BatchNorm2d(num_imd_feats),
@@ -187,7 +210,7 @@ class ResNeXt(nn.Module):
 		super(ResNeXt, self).__init__()
 
 		self.resnext = self.get_resnext()
-		self.resnext.load_state_dict(torch.load(os.path.join(pretrained_dir,'resnext.pth')))
+		self.resnext.load_state_dict(torch.load(os.path.join(pretrained_dir,'resnext_101_64x4d.pth')))
 
 		self.layer0 = nn.Sequential(
 			self.resnext[0],

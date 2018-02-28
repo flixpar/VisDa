@@ -22,7 +22,7 @@ from models.gcn_deconv import GCN_DECONV
 from models.gcn_psp import GCN_PSP
 from models.gcn_comb import GCN_COMBINED
 from models.pspnet import PSPNet
-from models.resnext import GCN_RESNEXT
+from models.gcn_resnext import GCN_RESNEXT
 
 from loaders.visda import VisDaDataset
 from loaders.cityscapes import CityscapesDataset

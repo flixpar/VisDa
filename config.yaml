@@ -1,18 +1,18 @@
 {
-    model: "GCN",
+    model: "GCN_RESNEXT",
     optimizer: "Adam",
 
     max_epochs: 15,
     batch_size: 2,
 
-    lr: 0.00002,
+    lr: 0.00001,
     weight_decay: 0.0005,
     momentum: 0.99,
 
     K: 11,
 
     scale_factor: 0.45,
-    default_img_size: !!python/tuple [1052, 1914],
+    default_img_size: !!python/tuple [1024, 2048], # [1052, 1914],
 
     lr_decay: True,
     scheduler: "poly",

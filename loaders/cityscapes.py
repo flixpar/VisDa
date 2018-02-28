@@ -48,7 +48,7 @@ class CityscapesDataset(data.Dataset):
 		class_weights = class_weights[1:]
 		self.class_weights = torch.FloatTensor(class_weights)
 
-		self.norm = transforms.Normalize(mean=self.img_mean, stf=self.img_stdev)
+		self.norm = transforms.Normalize(mean=self.img_mean, std=self.img_stdev)
 
 	def __getitem__(self, index):
 		img_fn = self.image_fnlist[index]
@@ -74,7 +74,7 @@ class CityscapesDataset(data.Dataset):
 		return img, lbl
 
 	def __len__(self):
-		return self.size
+		return self.length
 
 	def transform_labels(self, lbl):
 		out = np.zeros((lbl.shape[0], lbl.shape[1]))

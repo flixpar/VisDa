@@ -41,7 +41,6 @@ class CityscapesDataset(data.Dataset):
 		self.size = len(self.image_fnlist)
 		self.img_size = im_size
 		self.default_size = cityscapes.shape
-		self.color_mode = col_mode
 
 		class_freq = [
 			0.11586621, 0.3235678,  0.19765419, 0.0357135, 0.05368808, 0.14305691,
