@@ -32,6 +32,10 @@ class Logger:
 		# dump config to save folder
 		yaml.dump(args.dict(), open(os.path.join(self.save_folder, "config.yaml"), 'w'))
 
+		# setup logging for best weights
+		self.max_eval = 0
+		self.max_eval_it = 0
+		self.path_to_best = os.path.join(self.save_folder, "best-{}.pth")
 
 	def log_args(self):
 		self.args.print_dict()
@@ -70,6 +74,11 @@ class Logger:
 			iou = self.evaluator.eval(model)
 			tqdm.write("Eval mIOU: {}".format(iou))
 			self.logfile.write("it: {}, miou: {}\n".format(self.iterations, iou))
+			if iou > self.max_eval:
+				os.remove(self.path_to_best.format(self.max_eval_it))
+				torch.save(model.state_dict(), self.path_to_best.format(it))
+				self.max_eval = iou
+				self.max_eval_it = it
 
 	def save_final(self, model):
 		torch.save(model.state_dict(), self.save_path.format("final"))
